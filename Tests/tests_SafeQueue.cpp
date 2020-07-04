@@ -7,9 +7,11 @@
 #include <gtest/gtest.h>
 #include <Kube/Core/SafeQueue.hpp>
 
+using namespace kF;
+
 TEST(SafeQueue, Basics)
 {
-    kF::SafeQueue<int> queue;
+    SafeQueue<int> queue;
 
     { // Produce
         auto producer = queue.acquireProducer();

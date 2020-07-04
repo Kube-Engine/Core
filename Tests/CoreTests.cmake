@@ -4,6 +4,7 @@ get_filename_component(KubeCoreTestsDir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 set(KubeCoreTestsSources
     ${KubeCoreTestsDir}/tests_SafeQueue.cpp
+    ${KubeCoreTestsDir}/tests_SafeAccessTable.cpp
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${KubeCoreTestsSources})
