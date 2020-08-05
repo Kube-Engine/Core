@@ -11,7 +11,7 @@ using namespace kF;
 
 TEST(SafeQueue, Basics)
 {
-    SafeQueue<int> queue;
+    Core::SafeQueue<int> queue;
 
     { // Produce
         auto producer = queue.acquireProducer();

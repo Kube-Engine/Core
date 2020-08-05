@@ -4,10 +4,10 @@
  */
 
 template<typename Type>
-kF::SafeQueueProducer<Type> kF::SafeQueue<Type>::acquireProducer(void)
+kF::Core::SafeQueueProducer<Type> kF::Core::SafeQueue<Type>::acquireProducer(void) noexcept
 {
     Page *available = nullptr;
-    auto readLock = std::shared_lock(_mutex);
+    std::shared_lock readLock(_mutex);
     PageState state;
 
     for (auto &page : _pages) {
@@ -24,23 +24,21 @@ kF::SafeQueueProducer<Type> kF::SafeQueue<Type>::acquireProducer(void)
             break;
         }
     }
-    readLock.unlock();
     if (state = PageState::Available; available && available->state.compare_exchange_weak(state, PageState::InUse))
         return SafeQueueProducer<Type>(available);
+    readLock.unlock();
     auto page = std::make_unique<Page>();
     page->state = PageState::InUse;
-    auto writeLock = std::lock_guard(_mutex);
+    std::lock_guard writeLock(_mutex);
     return SafeQueueProducer<Type>(_pages.emplace_back(std::move(page)).get());
 }
 
-
 template<typename Type>
-kF::SafeQueueConsumer<Type> kF::SafeQueue<Type>::acquireConsumer(void)
+kF::Core::SafeQueueConsumer<Type> kF::Core::SafeQueue<Type>::acquireConsumer(void) noexcept
 {
-    auto readLock = std::shared_lock(_mutex);
     PageState state;
 
-    for (auto &page : _pages) {
+    for (std::shared_lock readLock(_mutex); auto &page : _pages) {
         state = page->state.load();
         if (state == PageState::Available && page->state.compare_exchange_weak(state, PageState::InUse))
             return SafeQueueConsumer<Type>(page.get());

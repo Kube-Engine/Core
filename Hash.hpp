@@ -33,6 +33,6 @@ namespace kF
         /** @brief Compile-time string hashing literal */
         constexpr HashedName operator ""_hash(char const *str, std::size_t len) { return Hash(str, len); }
 
-        static_assert(""_hash == HashOffset);
+        static_assert(""_hash == HashOffset, "There is an error in compile-time hashing algorithm");
     }
 }

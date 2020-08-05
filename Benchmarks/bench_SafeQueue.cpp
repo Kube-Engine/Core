@@ -7,6 +7,8 @@
 
 #include <Kube/Core/SafeQueue.hpp>
 
+using namespace kF;
+
 static void Vector_Append(benchmark::State &state)
 {
     std::vector<int> queue;
@@ -20,7 +22,7 @@ BENCHMARK(Vector_Append);
 static void SafeQueue_Append(benchmark::State &state)
 {
     static std::atomic<int> count { 0 };
-    static kF::SafeQueue<int> queue;
+    static Core::SafeQueue<int> queue;
     auto producer = queue.acquireProducer();
 
     for (auto _ : state) {
@@ -49,21 +51,21 @@ static void Vector_AppendRange(benchmark::State &state)
         queue.shrink_to_fit();
     }
 }
-BENCHMARK(Vector_AppendRange)->Range(1, 8*8*8*8*8)->RangeMultiplier(2);
+BENCHMARK(Vector_AppendRange)->Range(1, 8*8*8*8*8)->RangeMultiplier(4);
 
 static void SafeQueue_AppendRange(benchmark::State &state)
 {
     static std::atomic<int> count { 0 };
-    static kF::SafeQueue<int> queue;
+    static Core::SafeQueue<int> queue;
 
     for (auto _ : state) {
         auto producer = queue.acquireProducer();
         auto max = state.range(0);
         for (auto i = 0l; i < max; ++i)
             producer.data().emplace_back(42);
-        producer.data().clear();
-        producer.data().shrink_to_fit();
-        producer.release();
+        // producer.data().clear();
+        // producer.data().shrink_to_fit();
+        // producer.release();
     }
     ++count;
     if (state.thread_index == 0) {
@@ -73,4 +75,4 @@ static void SafeQueue_AppendRange(benchmark::State &state)
     }
 }
 
-BENCHMARK(SafeQueue_AppendRange)->Range(1, 8*8*8*8*8)->RangeMultiplier(2)->ThreadRange(1, 16);
+BENCHMARK(SafeQueue_AppendRange)->Range(1, 8*8*8*8*8)->RangeMultiplier(4)->ThreadRange(1, 16);
