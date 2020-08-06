@@ -96,3 +96,42 @@ static void SPSCQueueNoisyPop(benchmark::State &state)
         thd.join();
 }
 BENCHMARK(SPSCQueueNoisyPop);
+
+static void SPSCQueueTransaction(benchmark::State &state)
+{
+    constexpr std::size_t queueSize = 4096;
+
+    const auto counter = state.range();
+
+    enum ThreadState { Work, Sleep, Stop };
+
+    Core::SPSCQueue<int, queueSize> queue;
+    std::atomic<ThreadState> thdState { Sleep };
+
+    std::thread thd([&queue, &thdState, counter] {
+        while (true) {
+            switch (thdState) {
+            case Work:
+                for (auto i = 0; i < counter; i += queue.push(i));
+                thdState = Sleep;
+                break;
+            case Sleep:
+                continue;
+            case Stop:
+                return;
+            }
+        }
+    });
+
+    for (auto _ : state) {
+        for (ThreadState expected = Sleep; !thdState.compare_exchange_weak(expected, Work); expected = Sleep);
+        for (auto i = 0; i < counter; ++i) {
+            int tmp = 0;
+            while (!queue.pop(tmp));
+        }
+    }
+    for (ThreadState expected = Sleep; !thdState.compare_exchange_weak(expected, Stop); expected = Sleep);
+    if (thd.joinable())
+        thd.join();
+}
+BENCHMARK(SPSCQueueTransaction)->Range(1, 10000000)->RangeMultiplier(3);
