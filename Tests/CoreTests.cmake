@@ -6,6 +6,7 @@ set(KubeCoreTestsSources
     ${KubeCoreTestsDir}/tests_SafeQueue.cpp
     ${KubeCoreTestsDir}/tests_SafeAccessTable.cpp
     ${KubeCoreTestsDir}/tests_SPSCQueue.cpp
+    ${KubeCoreTestsDir}/tests_MPMCQueue.cpp
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${KubeCoreTestsSources})

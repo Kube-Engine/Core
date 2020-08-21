@@ -10,6 +10,10 @@ set(KubeCoreSources
     ${KubeCoreDir}/Assert.hpp
     ${KubeCoreDir}/SafeQueue.hpp
     ${KubeCoreDir}/SafeQueue.ipp
+    ${KubeCoreDir}/SPSCQueue.hpp
+    ${KubeCoreDir}/SPSCQueue.ipp
+    ${KubeCoreDir}/MPMCQueue.hpp
+    ${KubeCoreDir}/MPMCQueue.ipp
 )
 
 add_library(${PROJECT_NAME} ${KubeCoreSources})

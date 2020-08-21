@@ -3,9 +3,9 @@
  * @ Description: SPSC Queue
  */
 
-template<typename Type, std::size_t Capacity>
+template<typename Type, std::size_t Capacity, bool PackMembers>
 template<typename ...Args>
-bool kF::Core::SPSCQueue<Type, Capacity>::push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+bool kF::Core::SPSCQueue<Type, Capacity, PackMembers>::push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
 {
     const auto size = _size.load();
     const auto tail = _tail;
@@ -19,9 +19,9 @@ bool kF::Core::SPSCQueue<Type, Capacity>::push(Args &&...args) noexcept(std::is_
     return true;
 }
 
-template<typename Type, std::size_t Capacity>
+template<typename Type, std::size_t Capacity, bool PackMembers>
 template<bool ForceCopy>
-std::size_t kF::Core::SPSCQueue<Type, Capacity>::pushRange(Type *data, const std::size_t max) noexcept(kF::Core::SPSCQueueUtils::NothrowCopyOrMoveConstruct<Type, ForceCopy>)
+std::size_t kF::Core::SPSCQueue<Type, Capacity, PackMembers>::pushRange(Type *data, const std::size_t max) noexcept(kF::Core::Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy>)
 {
     const auto tail = _tail;
     const auto available = Capacity - _size.load();
@@ -33,16 +33,16 @@ std::size_t kF::Core::SPSCQueue<Type, Capacity>::pushRange(Type *data, const std
     if (!toInsert)
         return 0;
     for (auto i = 0ul; i < range1; ++i)
-        ForwardConstruct<ForceCopy>(_buffer + (tail + i), data + i);
+        Utils::ForwardConstruct<Type, ForceCopy>(_buffer + (tail + i), data + i);
     for (auto i = 0ul; i < range2; ++i)
-        ForwardConstruct<ForceCopy>(_buffer + i, data + i);
+        Utils::ForwardConstruct<Type, ForceCopy>(_buffer + i, data + i);
     _tail = nextTail;
     _size += toInsert;
     return toInsert;
 }
 
-template<typename Type, std::size_t Capacity>
-bool kF::Core::SPSCQueue<Type, Capacity>::pop(Type &value) noexcept(kF::Core::SPSCQueueUtils::NothrowCopyOrMoveAssign<Type>)
+template<typename Type, std::size_t Capacity, bool PackMembers>
+bool kF::Core::SPSCQueue<Type, Capacity, PackMembers>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
 {
     const auto head = _head;
     const auto size = _size.load();
@@ -50,14 +50,14 @@ bool kF::Core::SPSCQueue<Type, Capacity>::pop(Type &value) noexcept(kF::Core::SP
 
     if (!size)
         return false;
-    ForwardAssign(&value, _buffer + head);
+    Utils::ForwardAssign(&value, _buffer + head);
     _head = nextHead;
     --_size;
     return true;
 }
 
-template<typename Type, std::size_t Capacity>
-std::size_t kF::Core::SPSCQueue<Type, Capacity>::popRange(Type *data, const std::size_t max) noexcept(kF::Core::SPSCQueueUtils::NothrowCopyOrMoveAssign<Type>)
+template<typename Type, std::size_t Capacity, bool PackMembers>
+std::size_t kF::Core::SPSCQueue<Type, Capacity, PackMembers>::popRange(Type *data, const std::size_t max) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
 {
     const auto head = _head;
     const auto size = _size.load();
@@ -69,16 +69,16 @@ std::size_t kF::Core::SPSCQueue<Type, Capacity>::popRange(Type *data, const std:
     if (!toExtract)
         return 0;
     for (auto i = 0ul; i < range1; ++i)
-        ForwardAssign(data + i, _buffer + (head + i));
+        Utils::ForwardAssign(data + i, _buffer + (head + i));
     for (auto i = 0ul; i < range2; ++i)
-        ForwardAssign(data + i, _buffer + i);
+        Utils::ForwardAssign(data + i, _buffer + i);
     _head = nextHead;
     _size -= toExtract;
     return toExtract;
 }
 
-template<typename Type, std::size_t Capacity>
-void kF::Core::SPSCQueue<Type, Capacity>::clear(void) noexcept(std::is_nothrow_destructible_v<Type>)
+template<typename Type, std::size_t Capacity, bool PackMembers>
+void kF::Core::SPSCQueue<Type, Capacity, PackMembers>::clear(void) noexcept(std::is_nothrow_destructible_v<Type>)
 {
     if constexpr (!std::is_trivially_destructible_v<Type>) {
         const auto head = _head;
