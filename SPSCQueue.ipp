@@ -3,95 +3,70 @@
  * @ Description: SPSC Queue
  */
 
-template<typename Type, std::size_t Capacity, bool PackMembers>
+template<typename Type>
+kF::Core::SPSCQueue<Type>::SPSCQueue(const std::size_t capacity)
+{
+    _buffer.capacity = capacity;
+    if (_buffer.data = reinterpret_cast<Type *>(std::malloc(sizeof(Type) * capacity)); !_buffer.data)
+        throw std::runtime_error("Core::SPSCQueue: Malloc failed");
+}
+
+template<typename Type>
 template<typename ...Args>
-bool kF::Core::SPSCQueue<Type, Capacity, PackMembers>::push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+inline bool kF::Core::SPSCQueue<Type>::push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
 {
-    const auto size = _size.load();
-    const auto tail = _tail;
-    const auto nextTail = Next(tail);
+    static_assert(std::is_constructible<Type, Args...>::value, "Type must be constructible from Args...");
 
-    if (size == Capacity)
-        return false;
-    new (_buffer + tail) Type(std::forward<Args>(args)...);
-    _tail = nextTail;
-    ++_size;
-    return true;
-}
+    const auto tail = _tail.load(std::memory_order_relaxed);
+    auto next = tail + 1;
 
-template<typename Type, std::size_t Capacity, bool PackMembers>
-template<bool ForceCopy>
-std::size_t kF::Core::SPSCQueue<Type, Capacity, PackMembers>::pushRange(Type *data, const std::size_t max) noexcept(kF::Core::Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy>)
-{
-    const auto tail = _tail;
-    const auto available = Capacity - _size.load();
-    const auto toInsert = max > available ? available : max;
-    const auto nextTail = Increment(tail, toInsert);
-    const auto range1 = tail + toInsert > Capacity ? Capacity - tail : toInsert;
-    const auto range2 = toInsert - range1;
-
-    if (!toInsert)
-        return 0;
-    for (auto i = 0ul; i < range1; ++i)
-        Utils::ForwardConstruct<Type, ForceCopy>(_buffer + (tail + i), data + i);
-    for (auto i = 0ul; i < range2; ++i)
-        Utils::ForwardConstruct<Type, ForceCopy>(_buffer + i, data + i);
-    _tail = nextTail;
-    _size += toInsert;
-    return toInsert;
-}
-
-template<typename Type, std::size_t Capacity, bool PackMembers>
-bool kF::Core::SPSCQueue<Type, Capacity, PackMembers>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
-{
-    const auto head = _head;
-    const auto size = _size.load();
-    const auto nextHead = Next(head);
-
-    if (!size)
-        return false;
-    Utils::ForwardAssign(&value, _buffer + head);
-    _head = nextHead;
-    --_size;
-    return true;
-}
-
-template<typename Type, std::size_t Capacity, bool PackMembers>
-std::size_t kF::Core::SPSCQueue<Type, Capacity, PackMembers>::popRange(Type *data, const std::size_t max) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
-{
-    const auto head = _head;
-    const auto size = _size.load();
-    const auto toExtract = max > size ? size : max;
-    const auto nextHead = Increment(head, toExtract);
-    const auto range1 = head + toExtract > Capacity ? Capacity - head : toExtract;
-    const auto range2 = toExtract - range1;
-
-    if (!toExtract)
-        return 0;
-    for (auto i = 0ul; i < range1; ++i)
-        Utils::ForwardAssign(data + i, _buffer + (head + i));
-    for (auto i = 0ul; i < range2; ++i)
-        Utils::ForwardAssign(data + i, _buffer + i);
-    _head = nextHead;
-    _size -= toExtract;
-    return toExtract;
-}
-
-template<typename Type, std::size_t Capacity, bool PackMembers>
-void kF::Core::SPSCQueue<Type, Capacity, PackMembers>::clear(void) noexcept(std::is_nothrow_destructible_v<Type>)
-{
-    if constexpr (!std::is_trivially_destructible_v<Type>) {
-        const auto head = _head;
-        const auto toExtract = _size.load();
-        const auto range1 = head + toExtract >= Capacity ? Capacity - head : toExtract;
-        const auto range2 = toExtract - range1;
-
-        for (auto i = 0; i < range1; ++i)
-            _buffer[head + i].~Type();
-        for (auto i = 0; i < range2; ++i)
-            _buffer[i].~Type();
+    if (next == _buffer.capacity) [[unlikely]]
+        next = 0;
+    if (auto head = _headCache; next == head) [[unlikely]] {
+        head = _headCache = _head.load(std::memory_order_acquire);
+        if (next == head) [[unlikely]]
+            return false;
     }
-    _head = 0;
-    _tail = 0;
-    _size.store(0);
+    new (_buffer.data + tail) Type{ std::forward<Args>(args)... };
+    _tail.store(next, std::memory_order_release);
+    return true;
+}
+
+template<typename Type>
+template<bool ForceCopy>
+std::size_t kF::Core::SPSCQueue<Type>::pushRange(Type *data, const std::size_t max) noexcept(kF::Core::Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy>)
+{
+    return 0;
+}
+
+template<typename Type>
+inline bool kF::Core::SPSCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
+{
+    const auto head = _head.load(std::memory_order_relaxed);
+
+    if (auto tail = _tailCache; head == tail) [[unlikely]] {
+        tail = _tailCache = _tail.load(std::memory_order_acquire);
+        if (head == tail) [[unlikely]]
+            return false;
+    }
+    auto *elem = reinterpret_cast<Type*>(_buffer.data + head);
+    auto next = head + 1;
+    if (next == _buffer.capacity) [[unlikely]]
+        next = 0;
+    value = std::move(*elem);
+    elem->~Type();
+    _head.store(next, std::memory_order_release);
+    return true;
+}
+
+template<typename Type>
+std::size_t kF::Core::SPSCQueue<Type>::popRange(Type *data, const std::size_t max) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
+{
+    return 0;
+}
+
+template<typename Type>
+void kF::Core::SPSCQueue<Type>::clear(void) noexcept(std::is_nothrow_destructible_v<Type>)
+{
+    for (Type type; pop(type););
 }

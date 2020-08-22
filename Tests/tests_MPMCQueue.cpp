@@ -16,9 +16,9 @@ constexpr auto ShortStr = "12345";
 
 TEST(MPMCQueue, SinglePushPop)
 {
-    constexpr std::size_t queueSize = 5;
+    constexpr std::size_t queueSize = 8;
 
-    Core::MPMCQueue<std::string, queueSize> queue;
+    Core::MPMCQueue<std::string> queue(queueSize);
 
     for (auto i = 0; i < queueSize; ++i)
         ASSERT_TRUE(queue.push(LongStr));
@@ -44,7 +44,7 @@ TEST(MPMCQueue, InstensiveThreading)
     std::thread pushThds[ThreadCount];
     std::thread popThds[ThreadCount];
 
-    Core::MPMCQueue<int, queueSize> queue;
+    Core::MPMCQueue<int> queue(queueSize);
 
     for (auto i = 0; i < ThreadCount; ++i)
         pushThds[i] = std::thread([&queue] {

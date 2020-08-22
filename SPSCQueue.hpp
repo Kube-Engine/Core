@@ -12,7 +12,7 @@
 
 namespace kF::Core
 {
-    template<typename Type, std::size_t Capacity, bool PackMembers>
+    template<typename Type>
     class SPSCQueue;
 }
 
@@ -23,26 +23,23 @@ namespace kF::Core
  * The queue supports ranged push / pop to insert multiple elements without performance impact
  *
  * @tparam Type to be inserted
- * @tparam Capacity of the ring buffer
  */
-template<typename Type, std::size_t Capacity, bool PackMembers = false>
+template<typename Type>
 class kF::Core::SPSCQueue
 {
 public:
-    static_assert(Capacity > 1, "A queue must have at least a capacity of 2");
+    /** @brief Buffer structure containing all cells */
+    struct Buffer
+    {
+        Type *data { nullptr };
+        std::size_t capacity { 0 };
+    };
 
     /** @brief Default constructor initialize the queue */
-    SPSCQueue(void) noexcept : _buffer(reinterpret_cast<Type *>(std::malloc(sizeof(Type) * Capacity))) {}
-
-    /** @brief Copy and move constructors disabled */
-    SPSCQueue(const SPSCQueue &other) = delete;
-    SPSCQueue(SPSCQueue &&other) = delete;
+    SPSCQueue(const std::size_t capacity);
 
     /** @brief Destruct and release all memory (unsafe) */
-    ~SPSCQueue(void) noexcept(std::is_nothrow_destructible_v<Type>) { clear(); std::free(_buffer); }
-
-    /** @brief Get queue's size */
-    [[nodiscard]] std::size_t size(void) const noexcept { return _size.load(); }
+    ~SPSCQueue(void) noexcept(std::is_nothrow_destructible_v<Type>) { clear(); std::free(_buffer.data); }
 
     /** @brief Push a single element into the queue
      *  @return true if the element has been inserted */
@@ -67,19 +64,17 @@ public:
     void clear(void) noexcept(std::is_nothrow_destructible_v<Type>);
 
 private:
-    KF_CACHELINE_ALIGNED_MEMBER_IF(!PackMembers, std::atomic<std::size_t>, _size, 0); // Size accessed by both producer and consumer
-    KF_CACHELINE_ALIGNED_MEMBER_IF(!PackMembers, std::size_t, _head, 0); // Head only accesses by consumer
-    KF_CACHELINE_ALIGNED_MEMBER_IF(!PackMembers, std::size_t, _tail, 0); // Tail only accesses by producer
-    KF_CACHELINE_ALIGNED_MEMBER_IF(!PackMembers, Type *, _buffer, nullptr); // Buffer accessed by both producer and consumers
+    KF_ALIGN_CACHELINE2 Buffer _buffer;
 
-    /** @brief Get the next index of value */
-    [[nodiscard]] static std::size_t Next(const std::size_t value) noexcept { return (value + 1) % Capacity; }
+    KF_ALIGN_CACHELINE2 std::atomic<size_t> _tail { 0 }; // Tail accessed by both producer and consumer
+    std::size_t _headCache { 0 }; // Head cache, accessed only by producer
 
-    /** @brief Increment value by count */
-    [[nodiscard]] static std::size_t Increment(const std::size_t value, const std::size_t count) noexcept { return (value + count) % Capacity; }
+    KF_ALIGN_CACHELINE2 std::atomic<size_t> _head { 0 }; // Head accessed by both producer and consumer
+    std::size_t _tailCache { 0 }; // Tail cache, accessed only by consumer
+
+    /** @brief Copy and move constructors disabled */
+    SPSCQueue(const SPSCQueue &other) = delete;
+    SPSCQueue(SPSCQueue &&other) = delete;
 };
-
-static_assert(sizeof(kF::Core::SPSCQueue<int, 4096, true>) == (sizeof(std::atomic<std::size_t>) + sizeof(std::size_t) * 2 + sizeof(int *)));
-static_assert(sizeof(kF::Core::SPSCQueue<int, 4096, false>) == (kF::Core::Utils::CacheLineSize * 4));
 
 #include "SPSCQueue.ipp"

@@ -8,13 +8,11 @@
 #include <type_traits>
 #include <cinttypes>
 
-/** @brief Fill a cacheline gap of a member variable if a condition is true */
-#define KF_CACHELINE_ALIGNED_MEMBER_IF(condition, Type, name, ...) \
-    [[no_unique_address]] std::conditional_t<condition, std::uint8_t[kF::Core::Utils::CacheLineSize - (sizeof(Type) % kF::Core::Utils::CacheLineSize)], kF::Core::Utils::Dummy> __padding##name; \
-    Type name { __VA_ARGS__ }
+#define KF_ALIGN_CACHELINE alignas(kF::Core::Utils::CacheLineSize)
+#define KF_ALIGN_CACHELINE2 alignas(kF::Core::Utils::CacheLineSize * 2)
 
-/** @brief Same as KF_CACHELINE_ALIGNED_MEMBER_IF but always true */
-#define KF_CACHELINE_ALIGNED_MEMBER(Type, name, ...) KF_FILL_CACHELINE_MEMBER_IF(true, Type, name, __VA_ARGS__)
+/** @brief Compile-time ternary expression */
+#define ConstexprTernary(condition, body, elseBody) [] { if constexpr (condition) { return body; } else { return elseBody; } }()
 
 namespace kF::Core::Utils
 {

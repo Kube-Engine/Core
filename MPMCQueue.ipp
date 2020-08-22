@@ -5,52 +5,65 @@
 
 #include "MPMCQueue.hpp"
 
-
-template<typename Type, std::size_t Capacity, bool PackMembers>
-kF::Core::MPMCQueue<Type, Capacity, PackMembers>::MPMCQueue(void) noexcept
-    :   _buffer(reinterpret_cast<Type *>(std::malloc(sizeof(Type) * Capacity + sizeof(State) * Capacity))),
-        _states(reinterpret_cast<State *>(std::malloc(sizeof(State) * Capacity)))
+template<typename Type>
+kF::Core::MPMCQueue<Type>::MPMCQueue(const std::size_t capacity)
+    : _buffer(Buffer { capacity - 1, nullptr })
 {
-    for (auto i = 0ul; i < Capacity; ++i)
-        _states[i].sequence.store(i);
+    if (!((capacity >= 2) && ((capacity & (capacity - 1)) == 0)))
+        throw std::invalid_argument("Core::MPMCQueue: Buffer capacity must be a power of 2");
+    else if (_buffer.mask < 2)
+        throw std::logic_error("Core::MPMCQueue: Capacity must be >= 2");
+    else if (_buffer.data = reinterpret_cast<Cell *>(std::malloc(sizeof(Cell) * capacity)); !_buffer.data)
+        throw std::runtime_error("Core::MPMCQueue: Malloc failed");
+    for (auto i = 0ul; i < capacity; ++i)
+        _buffer.data[i].sequence.store(i);
 }
 
-template<typename Type, std::size_t Capacity, bool PackMembers>
-template<typename ...Args>
-bool kF::Core::MPMCQueue<Type, Capacity, PackMembers>::push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+template<typename Type>
+template<bool MoveOnSuccess, typename ...Args>
+bool kF::Core::MPMCQueue<Type>::push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
 {
-    std::size_t tail, realTail;
+    auto pos = _tail.load(std::memory_order_relaxed);
+    Cell *cell;
 
     while (true) {
-        tail = _tail.load();
-        realTail = tail % Capacity;
-        auto sequence = _states[realTail].sequence.load();
-        if (sequence == tail && _tail.compare_exchange_weak(tail, tail + 1))
-            break;
-        else if (sequence < tail)
+        cell = &_buffer.data[pos & _buffer.mask];
+        const auto sequence = cell->sequence.load(std::memory_order_acquire);
+        if (sequence == pos) [[likely]] {
+            if (_tail.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed)) [[likely]]
+                break;
+        } else if (sequence < pos) [[unlikely]]
             return false;
+        else
+            pos = _tail.load(std::memory_order_relaxed);
     }
-    new (_buffer + realTail) Type(std::forward<Args>(args)...);
-    ++_states[realTail].sequence;
+    if constexpr (MoveOnSuccess)
+        new (&cell->data) Type(std::move(args)...);
+    else
+        new (&cell->data) Type(std::forward<Args>(args)...);
+    cell->sequence.store(pos + 1, std::memory_order_release);
     return true;
 }
 
-template<typename Type, std::size_t Capacity, bool PackMembers>
-bool kF::Core::MPMCQueue<Type, Capacity, PackMembers>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
+template<typename Type>
+bool kF::Core::MPMCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
 {
-    std::size_t head, realHead;
+    auto pos = _head.load(std::memory_order_relaxed);
+    Cell *cell;
 
     while (true) {
-        head = _head.load();
-        realHead = head % Capacity;
-        const auto nextHead = head + 1;
-        auto sequence = _states[realHead].sequence.load();
-        if (sequence == nextHead && _head.compare_exchange_weak(head, nextHead))
-            break;
-        else if (sequence < nextHead)
+        cell = &_buffer.data[pos & _buffer.mask];
+        const auto sequence = cell->sequence.load(std::memory_order_acquire);
+        const auto next = pos + 1;
+        if (sequence == next) [[likely]] {
+            if (_head.compare_exchange_weak(pos, next, std::memory_order_relaxed)) [[likely]]
+                break;
+        } else if (sequence < next) [[unlikely]]
             return false;
+        else
+            pos = _head.load(std::memory_order_relaxed);
     }
-    Utils::ForwardAssign(&value, _buffer + realHead);
-    _states[realHead].sequence.store(head + Capacity);
+    Utils::ForwardAssign(&value, &cell->data);
+    cell->sequence.store(pos + _buffer.mask + 1, std::memory_order_release);
     return true;
 }

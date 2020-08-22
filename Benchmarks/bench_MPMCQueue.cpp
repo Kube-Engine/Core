@@ -12,17 +12,10 @@
 
 using namespace kF;
 
+using Queue = Core::MPMCQueue<std::size_t>;
+
 #define GENERATE_TESTS(TEST, ...) \
-    TEST(8, true __VA_OPT__(,) __VA_ARGS__); \
-    TEST(8, false __VA_OPT__(,) __VA_ARGS__); \
-    TEST(64, true __VA_OPT__(,) __VA_ARGS__); \
-    TEST(64, false __VA_OPT__(,) __VA_ARGS__); \
-    TEST(512, true __VA_OPT__(,) __VA_ARGS__); \
-    TEST(512, false __VA_OPT__(,) __VA_ARGS__); \
-    TEST(4096, true __VA_OPT__(,) __VA_ARGS__); \
-    TEST(4096, false __VA_OPT__(,) __VA_ARGS__); \
-    TEST(32768, true __VA_OPT__(,) __VA_ARGS__); \
-    TEST(32768, false __VA_OPT__(,) __VA_ARGS__)
+    TEST(4096 __VA_OPT__(,) __VA_ARGS__)
 
 #define GENERATE_TESTS_THREADS(TEST) \
     GENERATE_TESTS(TEST, 1, 1); \
@@ -33,11 +26,10 @@ using namespace kF;
     GENERATE_TESTS(TEST, 2, 1); \
     GENERATE_TESTS(TEST, 4, 1)
 
-#define MPMCQUEUE_SINGLETHREADED_PUSH(Capacity, PackMembers) \
-static void MPMCQueue_SingleThreadedPush_##Capacity##_##PackMembers(benchmark::State &state) \
+#define MPMCQUEUE_SINGLETHREADED_PUSH(Capacity) \
+static void MPMCQueue_SingleThreadedPush_##Capacity(benchmark::State &state) \
 { \
-    using Queue = Core::MPMCQueue<std::size_t, Capacity, PackMembers>; \
-    Queue queue; \
+    Queue queue(Capacity); \
     std::size_t i = 0ul; \
     for (auto _ : state) { \
         queue.clear(); \
@@ -50,15 +42,14 @@ static void MPMCQueue_SingleThreadedPush_##Capacity##_##PackMembers(benchmark::S
         state.SetIterationTime(iterationTime); \
     } \
 } \
-BENCHMARK(MPMCQueue_SingleThreadedPush_##Capacity##_##PackMembers)->UseManualTime();
+BENCHMARK(MPMCQueue_SingleThreadedPush_##Capacity)->UseManualTime();
 
 GENERATE_TESTS(MPMCQUEUE_SINGLETHREADED_PUSH);
 
-#define MPMCQUEUE_SINGLETHREADED_POP(Capacity, PackMembers) \
-static void MPMCQueue_SingleThreadedPop_##Capacity##_##PackMembers(benchmark::State &state) \
+#define MPMCQUEUE_SINGLETHREADED_POP(Capacity) \
+static void MPMCQueue_SingleThreadedPop_##Capacity(benchmark::State &state) \
 { \
-    using Queue = Core::MPMCQueue<std::size_t, Capacity, PackMembers>; \
-    Queue queue; \
+    Queue queue(Capacity); \
     std::size_t i = 0ul; \
     for (auto _ : state) { \
         while (queue.push(42ul)); \
@@ -71,15 +62,14 @@ static void MPMCQueue_SingleThreadedPop_##Capacity##_##PackMembers(benchmark::St
         state.SetIterationTime(iterationTime); \
     } \
 } \
-BENCHMARK(MPMCQueue_SingleThreadedPop_##Capacity##_##PackMembers)->UseManualTime();
+BENCHMARK(MPMCQueue_SingleThreadedPop_##Capacity)->UseManualTime();
 
 GENERATE_TESTS(MPMCQUEUE_SINGLETHREADED_POP);
 
-#define MPMCQUEUE_NOISY_PUSH(Capacity, PackMembers, PushCount, PopCount) \
-static void MPMCQueue_NoisyPush_##Capacity##_##PackMembers##_##PushCount##_##PopCount(benchmark::State &state) \
+#define MPMCQUEUE_NOISY_PUSH(Capacity, PushCount, PopCount) \
+static void MPMCQueue_NoisyPush_##Capacity##_##PushCount##_##PopCount(benchmark::State &state) \
 { \
-    using Queue = Core::MPMCQueue<std::size_t, Capacity, PackMembers>; \
-    Queue queue; \
+    Queue queue(Capacity); \
     std::atomic<bool> running = true; \
     std::size_t i = 0ul; \
     std::vector<std::thread> pushThds; \
@@ -104,15 +94,14 @@ static void MPMCQueue_NoisyPush_##Capacity##_##PackMembers##_##PushCount##_##Pop
         if (thd.joinable()) \
             thd.join(); \
 } \
-BENCHMARK(MPMCQueue_NoisyPush_##Capacity##_##PackMembers##_##PushCount##_##PopCount)->UseManualTime();
+BENCHMARK(MPMCQueue_NoisyPush_##Capacity##_##PushCount##_##PopCount)->UseManualTime();
 
 GENERATE_TESTS_THREADS(MPMCQUEUE_NOISY_PUSH);
 
-#define MPMCQUEUE_NOISY_POP(Capacity, PackMembers, PushCount, PopCount) \
-static void MPMCQueue_NoisyPop_##Capacity##_##PackMembers##_##PushCount##_##PopCount(benchmark::State &state) \
+#define MPMCQUEUE_NOISY_POP(Capacity, PushCount, PopCount) \
+static void MPMCQueue_NoisyPop_##Capacity##_##PushCount##_##PopCount(benchmark::State &state) \
 { \
-    using Queue = Core::MPMCQueue<std::size_t, Capacity, PackMembers>; \
-    Queue queue; \
+    Queue queue(Capacity); \
     std::atomic<bool> running = true; \
     std::size_t i = 0ul; \
     std::vector<std::thread> pushThds; \
@@ -138,6 +127,6 @@ static void MPMCQueue_NoisyPop_##Capacity##_##PackMembers##_##PushCount##_##PopC
         if (thd.joinable()) \
             thd.join(); \
 } \
-BENCHMARK(MPMCQueue_NoisyPop_##Capacity##_##PackMembers##_##PushCount##_##PopCount)->UseManualTime();
+BENCHMARK(MPMCQueue_NoisyPop_##Capacity##_##PushCount##_##PopCount)->UseManualTime();
 
 GENERATE_TESTS_THREADS(MPMCQUEUE_NOISY_POP);

@@ -16,9 +16,9 @@ constexpr auto ShortStr = "12345";
 
 TEST(SPSCQueue, SinglePushPop)
 {
-    constexpr std::size_t queueSize = 5;
+    constexpr std::size_t queueSize = 8;
 
-    Core::SPSCQueue<std::string, queueSize> queue;
+    Core::SPSCQueue<std::string> queue(queueSize);
 
     for (auto i = 0; i < queueSize; ++i)
         ASSERT_TRUE(queue.push(LongStr));
@@ -33,9 +33,9 @@ TEST(SPSCQueue, SinglePushPop)
 
 TEST(SPSCQueue, RangePushPop)
 {
-    constexpr std::size_t queueSize = 10;
+    constexpr std::size_t queueSize = 8;
 
-    Core::SPSCQueue<std::string, queueSize> queue;
+    Core::SPSCQueue<std::string> queue(queueSize);
     std::vector<std::string> data(queueSize, LongStr), data2(queueSize, ShortStr), tmp(queueSize);
 
     ASSERT_EQ(queue.pushRange<true>(data.data(), data.size() * 2), queueSize);
@@ -67,7 +67,7 @@ TEST(SPSCQueue, InstensiveThreading)
     constexpr auto Counter = 10000000;
     constexpr std::size_t queueSize = 4096;
 
-    Core::SPSCQueue<int, queueSize> queue;
+    Core::SPSCQueue<int> queue(queueSize);
 
     std::thread thd([&queue] {
         for (auto i = 0; i < Counter; i += queue.push(i));
