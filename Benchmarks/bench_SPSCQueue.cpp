@@ -116,7 +116,7 @@ static void SPSCQueue_NoisyRangePush_##Capacity(benchmark::State &state) \
     std::atomic<bool> running = true; \
     std::size_t i = 0ul; \
     std::thread thd([&queue, &running] { \
-        for (std::size_t cache[Capacity / Div]; running; benchmark::DoNotOptimize(queue.popRange(cache, Capacity / Div))); \
+        for (std::size_t cache[Capacity / Div]; running; benchmark::DoNotOptimize(queue.tryPopRange(cache, Capacity / Div))); \
     }); \
     std::size_t cache[Capacity / Div]; \
     for (auto &c : cache) \
@@ -125,7 +125,7 @@ static void SPSCQueue_NoisyRangePush_##Capacity(benchmark::State &state) \
         decltype(std::chrono::high_resolution_clock::now()) start; \
         do { \
             start = std::chrono::high_resolution_clock::now(); \
-        } while (!queue.pushRange(cache, Capacity / Div)); \
+        } while (!queue.tryPushRange(cache, Capacity / Div)); \
         auto end = std::chrono::high_resolution_clock::now(); \
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
         auto iterationTime = elapsed.count(); \
@@ -149,14 +149,14 @@ static void SPSCQueue_NoisyRangePop_##Capacity(benchmark::State &state) \
         std::size_t cache[Capacity / Div]; \
         for (auto &c : cache) \
             c = 42ul; \
-        for (; running; benchmark::DoNotOptimize(queue.pushRange(cache, Capacity / Div))); \
+        for (; running; benchmark::DoNotOptimize(queue.tryPushRange(cache, Capacity / Div))); \
     }); \
     std::size_t cache[Capacity / Div]; \
     for (auto _ : state) { \
         decltype(std::chrono::high_resolution_clock::now()) start; \
         do { \
             start = std::chrono::high_resolution_clock::now(); \
-        } while (!queue.popRange(cache, Capacity / Div)); \
+        } while (!queue.tryPopRange(cache, Capacity / Div)); \
         auto end = std::chrono::high_resolution_clock::now(); \
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
         auto iterationTime = elapsed.count(); \
@@ -179,13 +179,13 @@ static void SPSCQueue_RangePush_##Capacity(benchmark::State &state) \
         c = 42ul; \
     for (auto _ : state) { \
         auto start = std::chrono::high_resolution_clock::now(); \
-        if (!queue.pushRange(cache, Capacity / Div)) \
+        if (!queue.tryPushRange(cache, Capacity / Div)) \
             return; \
         auto end = std::chrono::high_resolution_clock::now(); \
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
         auto iterationTime = elapsed.count(); \
         state.SetIterationTime(iterationTime); \
-        if (!queue.popRange(cache, Capacity / Div)) \
+        if (!queue.tryPopRange(cache, Capacity / Div)) \
             return; \
     } \
 } \
@@ -201,10 +201,10 @@ static void SPSCQueue_RangePop_##Capacity(benchmark::State &state) \
     for (auto &c : cache) \
         c = 42ul; \
     for (auto _ : state) { \
-        if (!queue.pushRange(cache, Capacity / Div)) \
+        if (!queue.tryPushRange(cache, Capacity / Div)) \
             return; \
         auto start = std::chrono::high_resolution_clock::now(); \
-        if (!queue.popRange(cache, Capacity / Div)) \
+        if (!queue.tryPopRange(cache, Capacity / Div)) \
             return; \
         auto end = std::chrono::high_resolution_clock::now(); \
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \

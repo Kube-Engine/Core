@@ -57,22 +57,32 @@ public:
 
     /** @brief Pop a single element from the queue
      *  @return true if an element has been extracted */
-    [[nodiscard]] inline bool pop(Type &value) noexcept(Utils::NothrowCopyOrMoveAssign<Type>);
+    [[nodiscard]] inline bool pop(Type &value) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>);
 
-    /** @brief Push multiple elements into the queue
+    /** @brief Push exactly 'count' elements into the queue
      *  @tparam ForceCopy If true, will prevent to move construct elements
      *  @return Success on true */
     template<bool ForceCopy = false>
-    [[nodiscard]] inline bool pushRange(Type *data, const std::size_t max) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy>);
+    [[nodiscard]] bool tryPushRange(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>) { return pushRangeImpl<false, ForceCopy>(data, count); }
 
-    /** @brief Pop up to 'max' elements from the queue
+    /** @brief Pop exactly 'count' elements from the queue
      *  @return Success on true */
-    [[nodiscard]] inline bool popRange(Type *data, const std::size_t max) noexcept(Utils::NothrowCopyOrMoveAssign<Type>);
+    [[nodiscard]] bool tryPopRange(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>) { return popRangeImpl<false>(data, count); }
+
+    /** @brief Push up to 'count' elements into the queue
+     *  @tparam ForceCopy If true, will prevent to move construct elements
+     *  @return The number of extracted elements */
+    template<bool ForceCopy = false>
+    [[nodiscard]] std::size_t pushRange(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>) { return pushRangeImpl<true, ForceCopy>(data, count); }
+
+    /** @brief Pop up to 'count' elements from the queue
+     *  @return The number of extracted elements */
+    [[nodiscard]] std::size_t popRange(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>) { return popRangeImpl<true>(data, count); }
 
     /** @brief Clear all elements of the queue (unsafe) */
     void clear(void) noexcept(std::is_nothrow_destructible_v<Type>);
 
-public:
+private:
     KF_ALIGN_CACHELINE std::atomic<size_t> _tail { 0 }; // Tail accessed by both producer and consumer
     KF_ALIGN_CACHELINE Cache _tailCache;
 
@@ -82,13 +92,14 @@ public:
     /** @brief Copy and move constructors disabled */
     SPSCQueue(const SPSCQueue &other) = delete;
     SPSCQueue(SPSCQueue &&other) = delete;
+
+    template<bool AllowLess, bool ForceCopy>
+    [[nodiscard]] inline std::size_t pushRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>);
+
+    template<bool AllowLess>
+    [[nodiscard]] inline std::size_t popRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>);
 };
 
 static_assert(sizeof(kF::Core::SPSCQueue<int>) == 4 * kF::Core::Utils::CacheLineSize);
-
-static_assert(offsetof(kF::Core::SPSCQueue<int>, _tail) == 0);
-static_assert(offsetof(kF::Core::SPSCQueue<int>, _tailCache) == 64);
-static_assert(offsetof(kF::Core::SPSCQueue<int>, _head) == 128);
-static_assert(offsetof(kF::Core::SPSCQueue<int>, _headCache) == 192);
 
 #include "SPSCQueue.ipp"

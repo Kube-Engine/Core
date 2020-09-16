@@ -58,10 +58,10 @@ public:
 
     /** @brief Pop a single element from the queue
      *  @return true if an element has been extracted */
-    [[nodiscard]] inline bool pop(Type &value) noexcept(Utils::NothrowCopyOrMoveAssign<Type>);
+    [[nodiscard]] inline bool pop(Type &value) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>);
 
     /** @brief Clear all elements of the queue (unsafe) */
-    void clear(void) noexcept(Utils::NothrowCopyOrMoveAssign<Type>) { for (Type tmp; pop(tmp);); }
+    void clear(void) noexcept(std::is_nothrow_destructible_v<Type>) { for (Type tmp; pop(tmp);); }
 
 private:
     KF_ALIGN_CACHELINE std::atomic<std::size_t> _tail { 0 }; // Tail accessed by producers

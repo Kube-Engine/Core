@@ -56,7 +56,7 @@ bool kF::Core::MPMCQueue<Type>::push(Args &&...args) noexcept(std::is_nothrow_co
 }
 
 template<typename Type>
-bool kF::Core::MPMCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
+bool kF::Core::MPMCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type, false, true>)
 {
     auto pos = _head.load(std::memory_order_relaxed);
     const auto mask = _headCache.buffer.mask;

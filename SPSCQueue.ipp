@@ -41,7 +41,7 @@ bool kF::Core::SPSCQueue<Type>::push(Args &&...args) noexcept(std::is_nothrow_co
 }
 
 template<typename Type>
-bool kF::Core::SPSCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
+bool kF::Core::SPSCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type, false, true>)
 {
     const auto head = _head.load(std::memory_order_relaxed);
 
@@ -60,8 +60,8 @@ bool kF::Core::SPSCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::Nothr
 }
 
 template<typename Type>
-template<bool ForceCopy>
-bool kF::Core::SPSCQueue<Type>::pushRange(Type *data, const std::size_t count) noexcept(kF::Core::Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy>)
+template<bool AllowLess, bool ForceCopy>
+std::size_t kF::Core::SPSCQueue<Type>::pushRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>)
 {
     const auto tail = _tail.load(std::memory_order_relaxed);
     const auto capacity = _tailCache.buffer.capacity;
@@ -76,7 +76,7 @@ bool kF::Core::SPSCQueue<Type>::pushRange(Type *data, const std::size_t count) n
         if (available > capacity) [[unlikely]]
             available -= capacity;
         if (count >= available) [[unlikely]]
-            return false;
+            return 0;
     }
     auto next = tail + count;
     if (next >= capacity) [[unlikely]] {
@@ -88,34 +88,12 @@ bool kF::Core::SPSCQueue<Type>::pushRange(Type *data, const std::size_t count) n
         Utils::ForwardConstructRange<Type, ForceCopy, false>(_tailCache.buffer.data + tail, data, count);
     }
     _tail.store(next, std::memory_order_release);
-    return true;
-//     const auto tail = _tail.load(std::memory_order_relaxed);
-//     const auto next = (tail + count) % _tailCache.buffer.capacity;
-//     auto head = _tailCache.value;
-//     auto available = (_tailCache.buffer.capacity - 1) - (head < tail ? tail - head : head - tail);
-
-//     if (available < count) [[unlikely]] {
-//         head = _tailCache.value = _head.load(std::memory_order_acquire);
-//         available = (_tailCache.buffer.capacity - 1) - (head < tail ? tail - head : head - tail);
-//         if (available < count) [[unlikely]]
-//             return false;
-//     }
-//     if (next > tail) {
-//         for (auto x = 0ul; x < count; ++x)
-//             Utils::ForwardConstruct<Type, ForceCopy>(_tailCache.buffer.data + x, data + x);
-//     } else {
-//         auto x = tail, y = 0ul;
-//         for (; x != _tailCache.buffer.capacity; ++x, ++y)
-//             Utils::ForwardConstruct<Type, ForceCopy>(_tailCache.buffer.data + x, data + y);
-//         for (x = 0ul; x != next; ++x, ++y)
-//             Utils::ForwardConstruct<Type, ForceCopy>(_tailCache.buffer.data + x, data + y);
-//     }
-//     _tail.store(next, std::memory_order_release);
-//     return true;
+    return count;
 }
 
 template<typename Type>
-bool kF::Core::SPSCQueue<Type>::popRange(Type *data, const std::size_t count) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type>)
+template<bool AllowLess>
+std::size_t kF::Core::SPSCQueue<Type>::popRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>)
 {
     const auto head = _head.load(std::memory_order_relaxed);
     const auto capacity = _headCache.buffer.capacity;
@@ -130,7 +108,7 @@ bool kF::Core::SPSCQueue<Type>::popRange(Type *data, const std::size_t count) no
         if (available > capacity) [[unlikely]]
             available += capacity;
         if (count > available) [[unlikely]]
-            return false;
+            return 0;
     }
     auto next = head + count;
     if (next >= capacity) [[unlikely]] {
@@ -142,30 +120,7 @@ bool kF::Core::SPSCQueue<Type>::popRange(Type *data, const std::size_t count) no
         Utils::ForwardAssignRange<Type, false, true>(data, _headCache.buffer.data + head, count);
     }
     _head.store(next, std::memory_order_release);
-    return true;
-    // const auto head = _head.load(std::memory_order_relaxed);
-    // const auto next = (head + count) % _headCache.buffer.capacity;
-    // auto tail = _headCache.value;
-    // auto available = (tail < head ? head - tail : tail - head);
-
-    // if (available < count) [[unlikely]] {
-    //     tail = _headCache.value = _tail.load(std::memory_order_acquire);
-    //     available = (tail < head ? head - tail : tail - head);
-    //     if (available < count) [[unlikely]]
-    //         return false;
-    // }
-    // if (next > head) {
-    //     for (auto x = 0ul; x < count; ++x)
-    //         Utils::ForwardAssign(data + x, _headCache.buffer.data + x);
-    // } else {
-    //     auto x = head, y = 0ul;
-    //     for (; x != _headCache.buffer.capacity; ++x, ++y)
-    //         Utils::ForwardAssign(data + y, _headCache.buffer.data + x);
-    //     for (x = 0ul; x != next; ++x, ++y)
-    //         Utils::ForwardAssign(data + y, _headCache.buffer.data + x);
-    // }
-    // _head.store(next, std::memory_order_release);
-    // return true;
+    return count;
 }
 
 template<typename Type>

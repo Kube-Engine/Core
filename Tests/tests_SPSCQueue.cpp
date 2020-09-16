@@ -38,10 +38,10 @@ TEST(SPSCQueue, RangePushPop)
         char tmp[size];
         for (auto &c : tmp)
             c = ref;
-        ASSERT_TRUE(queue.pushRange(tmp, size));
+        ASSERT_TRUE(queue.tryPushRange(tmp, size));
         for (auto &c : tmp)
             c = 0;
-        ASSERT_TRUE(queue.popRange(tmp, size));
+        ASSERT_TRUE(queue.tryPopRange(tmp, size));
         for (const auto c : tmp)
             ASSERT_EQ(c, ref);
     };
@@ -50,8 +50,8 @@ TEST(SPSCQueue, RangePushPop)
 
     for (auto queueSize = 1ul; queueSize < maxQueueSize; queueSize *= 2) {
         Core::SPSCQueue<char> queue(queueSize);
-        ASSERT_FALSE(queue.pushRange(nullptr, queueSize + 1));
-        ASSERT_FALSE(queue.popRange(nullptr, 1));
+        ASSERT_FALSE(queue.tryPushRange(nullptr, queueSize + 1));
+        ASSERT_FALSE(queue.tryPopRange(nullptr, 1));
         for (auto size = 1ul; size <= queueSize; ++size)
             test(queue, size);
         for (auto size = queueSize; size > 0; --size)
