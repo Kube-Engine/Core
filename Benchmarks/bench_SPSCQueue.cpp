@@ -16,6 +16,9 @@ using Queue = Core::SPSCQueue<std::size_t>;
 #define GENERATE_TESTS(TEST, ...) \
     TEST(4096 __VA_OPT__(,) __VA_ARGS__)
 
+#define GENERATE_RANGE_TESTS(TEST, ...) \
+    TEST(4096, 4 __VA_OPT__(,) __VA_ARGS__)
+
 #define SPSCQUEUE_SINGLETHREADED_PUSH(Capacity) \
 static void SPSCQueue_SingleThreadedPush_##Capacity(benchmark::State &state) \
 { \
@@ -105,3 +108,110 @@ static void SPSCQueue_NoisyPop_##Capacity(benchmark::State &state) \
 BENCHMARK(SPSCQueue_NoisyPop_##Capacity)->UseManualTime();
 
 GENERATE_TESTS(SPSCQUEUE_NOISY_POP);
+
+#define SPSCQUEUE_NOISY_RANGEPUSH(Capacity, Div) \
+static void SPSCQueue_NoisyRangePush_##Capacity(benchmark::State &state) \
+{ \
+    Queue queue(Capacity); \
+    std::atomic<bool> running = true; \
+    std::size_t i = 0ul; \
+    std::thread thd([&queue, &running] { \
+        for (std::size_t cache[Capacity / Div]; running; benchmark::DoNotOptimize(queue.popRange(cache, Capacity / Div))); \
+    }); \
+    std::size_t cache[Capacity / Div]; \
+    for (auto &c : cache) \
+        c = 42ul; \
+    for (auto _ : state) { \
+        decltype(std::chrono::high_resolution_clock::now()) start; \
+        do { \
+            start = std::chrono::high_resolution_clock::now(); \
+        } while (!queue.pushRange(cache, Capacity / Div)); \
+        auto end = std::chrono::high_resolution_clock::now(); \
+        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
+        auto iterationTime = elapsed.count(); \
+        state.SetIterationTime(iterationTime); \
+    } \
+    running = false; \
+    if (thd.joinable()) \
+        thd.join(); \
+} \
+BENCHMARK(SPSCQueue_NoisyRangePush_##Capacity)->UseManualTime();
+
+GENERATE_RANGE_TESTS(SPSCQUEUE_NOISY_RANGEPUSH);
+
+#define SPSCQUEUE_NOISY_RANGEPOP(Capacity, Div) \
+static void SPSCQueue_NoisyRangePop_##Capacity(benchmark::State &state) \
+{ \
+    Queue queue(Capacity); \
+    std::atomic<bool> running = true; \
+    std::size_t i = 0ul; \
+    std::thread thd([&queue, &running] { \
+        std::size_t cache[Capacity / Div]; \
+        for (auto &c : cache) \
+            c = 42ul; \
+        for (; running; benchmark::DoNotOptimize(queue.pushRange(cache, Capacity / Div))); \
+    }); \
+    std::size_t cache[Capacity / Div]; \
+    for (auto _ : state) { \
+        decltype(std::chrono::high_resolution_clock::now()) start; \
+        do { \
+            start = std::chrono::high_resolution_clock::now(); \
+        } while (!queue.popRange(cache, Capacity / Div)); \
+        auto end = std::chrono::high_resolution_clock::now(); \
+        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
+        auto iterationTime = elapsed.count(); \
+        state.SetIterationTime(iterationTime); \
+    } \
+    running = false; \
+    if (thd.joinable()) \
+        thd.join(); \
+} \
+BENCHMARK(SPSCQueue_NoisyRangePop_##Capacity)->UseManualTime();
+
+GENERATE_RANGE_TESTS(SPSCQUEUE_NOISY_RANGEPOP);
+
+#define SPSCQUEUE_RANGEPUSH(Capacity, Div) \
+static void SPSCQueue_RangePush_##Capacity(benchmark::State &state) \
+{ \
+    Queue queue(Capacity); \
+    std::size_t cache[Capacity / Div]; \
+    for (auto &c : cache) \
+        c = 42ul; \
+    for (auto _ : state) { \
+        auto start = std::chrono::high_resolution_clock::now(); \
+        if (!queue.pushRange(cache, Capacity / Div)) \
+            return; \
+        auto end = std::chrono::high_resolution_clock::now(); \
+        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
+        auto iterationTime = elapsed.count(); \
+        state.SetIterationTime(iterationTime); \
+        if (!queue.popRange(cache, Capacity / Div)) \
+            return; \
+    } \
+} \
+BENCHMARK(SPSCQueue_RangePush_##Capacity)->UseManualTime();
+
+GENERATE_RANGE_TESTS(SPSCQUEUE_RANGEPUSH);
+
+#define SPSCQUEUE_RANGEPOP(Capacity, Div) \
+static void SPSCQueue_RangePop_##Capacity(benchmark::State &state) \
+{ \
+    Queue queue(Capacity); \
+    std::size_t cache[Capacity / Div]; \
+    for (auto &c : cache) \
+        c = 42ul; \
+    for (auto _ : state) { \
+        if (!queue.pushRange(cache, Capacity / Div)) \
+            return; \
+        auto start = std::chrono::high_resolution_clock::now(); \
+        if (!queue.popRange(cache, Capacity / Div)) \
+            return; \
+        auto end = std::chrono::high_resolution_clock::now(); \
+        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
+        auto iterationTime = elapsed.count(); \
+        state.SetIterationTime(iterationTime); \
+    } \
+} \
+BENCHMARK(SPSCQueue_RangePop_##Capacity)->UseManualTime();
+
+GENERATE_RANGE_TESTS(SPSCQUEUE_RANGEPOP);

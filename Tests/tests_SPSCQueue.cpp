@@ -33,33 +33,30 @@ TEST(SPSCQueue, SinglePushPop)
 
 TEST(SPSCQueue, RangePushPop)
 {
-    constexpr std::size_t queueSize = 8;
+    constexpr auto test = [](auto &queue, const std::size_t size) {
+        const char ref = size % INT8_MAX;
+        char tmp[size];
+        for (auto &c : tmp)
+            c = ref;
+        ASSERT_TRUE(queue.pushRange(tmp, size));
+        for (auto &c : tmp)
+            c = 0;
+        ASSERT_TRUE(queue.popRange(tmp, size));
+        for (const auto c : tmp)
+            ASSERT_EQ(c, ref);
+    };
 
-    Core::SPSCQueue<std::string> queue(queueSize);
-    std::vector<std::string> data(queueSize, LongStr), data2(queueSize, ShortStr), tmp(queueSize);
+    constexpr std::size_t maxQueueSize = 4096;
 
-    ASSERT_EQ(queue.pushRange<true>(data.data(), data.size() * 2), queueSize);
-    ASSERT_EQ(queue.pushRange<true>(data2.data(), data2.size()), 0);
-    ASSERT_EQ(queue.popRange(tmp.data(), tmp.size()), queueSize);
-    for (auto &str : tmp)
-        ASSERT_EQ(str, LongStr);
-
-    ASSERT_EQ(queue.pushRange(data2.data(), queueSize - 1), queueSize - 1);
-    ASSERT_EQ(queue.pushRange(data.data(), data.size()), 1);
-    ASSERT_EQ(queue.popRange(tmp.data(), tmp.size()), queueSize);
-    for (auto i = 0u; auto &str : tmp) {
-        if (i + 1 == tmp.size())
-            ASSERT_EQ(str, LongStr);
-        else
-            ASSERT_EQ(str, ShortStr);
-        ++i;
+    for (auto queueSize = 1ul; queueSize < maxQueueSize; queueSize *= 2) {
+        Core::SPSCQueue<char> queue(queueSize);
+        ASSERT_FALSE(queue.pushRange(nullptr, queueSize + 1));
+        ASSERT_FALSE(queue.popRange(nullptr, 1));
+        for (auto size = 1ul; size <= queueSize; ++size)
+            test(queue, size);
+        for (auto size = queueSize; size > 0; --size)
+            test(queue, size);
     }
-    ASSERT_EQ(data[0], "");
-    for (auto i = 1; i < queueSize; ++i)
-        ASSERT_EQ(data[i], LongStr);
-    for (auto i = 0; i < queueSize - 1; ++i)
-        ASSERT_EQ(data2[i], "");
-    ASSERT_EQ(data2[queueSize - 1], ShortStr);
 }
 
 TEST(SPSCQueue, InstensiveThreading)

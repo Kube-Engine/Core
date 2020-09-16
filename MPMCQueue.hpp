@@ -22,7 +22,7 @@ namespace kF::Core
  * @tparam Type to be inserted
  */
 template<typename Type>
-class kF::Core::MPMCQueue
+class KF_ALIGN_CACHELINE2 kF::Core::MPMCQueue
 {
 public:
     /** @brief Each cell represent the queued type and a sequence index */
@@ -39,11 +39,17 @@ public:
         Cell *data { nullptr };
     };
 
+    /** @brief Cache of producers or consumers */
+    struct Cache
+    {
+        Buffer buffer;
+    };
+
     /** @brief Default constructor initialize the queue */
     MPMCQueue(const std::size_t size);
 
     /** @brief Destruct and release all memory (unsafe) */
-    ~MPMCQueue(void) noexcept(std::is_nothrow_destructible_v<Type>) { clear(); std::free(_buffer.data);; }
+    ~MPMCQueue(void) noexcept(std::is_nothrow_destructible_v<Type>);
 
     /** @brief Push a single element into the queue
      *  @return true if the element has been inserted */
@@ -58,15 +64,16 @@ public:
     void clear(void) noexcept(Utils::NothrowCopyOrMoveAssign<Type>) { for (Type tmp; pop(tmp);); }
 
 private:
-    KF_ALIGN_CACHELINE Buffer _buffer; // Buffer accessed by both producer and consumers
     KF_ALIGN_CACHELINE std::atomic<std::size_t> _tail { 0 }; // Tail accessed by producers
+    KF_ALIGN_CACHELINE Cache _tailCache; // Cache accessed by producers
     KF_ALIGN_CACHELINE std::atomic<std::size_t> _head { 0 }; // Head accessed by consumers
+    KF_ALIGN_CACHELINE Cache _headCache; // Cache accessed by consumers
 
     /** @brief Copy and move constructors disabled */
     MPMCQueue(const MPMCQueue &other) = delete;
     MPMCQueue(MPMCQueue &&other) = delete;
 };
 
-static_assert(sizeof(kF::Core::MPMCQueue<int>) == 3 * kF::Core::Utils::CacheLineSize);
+static_assert(sizeof(kF::Core::MPMCQueue<int>) == 4 * kF::Core::Utils::CacheLineSize);
 
 #include "MPMCQueue.ipp"

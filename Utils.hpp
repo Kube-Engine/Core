@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: A set of template utils used globally
+ * @ Description: A set of utility used globally in the framework
  */
 
 #pragma once
@@ -34,22 +34,49 @@ namespace kF::Core::Utils
             return std::is_nothrow_copy_assignable_v<Type>;
     }();
 
-    /** @brief Helper used to perfect forward move / copy constructor */
-    template<typename Type, bool ForceCopy = false>
-    void ForwardConstruct(Type *dest, Type *source) noexcept(NothrowCopyOrMoveConstruct<Type>) {
+    /** @brief Helper used to construct 'output' by forwarding 'input' */
+    template<typename Type, bool ForceCopy = false, bool DestroyInput = false>
+    void ForwardConstruct(Type *output, Type *input) noexcept(NothrowCopyOrMoveConstruct<Type>) {
         if constexpr (!ForceCopy && std::is_move_assignable_v<Type>)
-            new (dest) Type(std::move(*source));
+            new (output) Type(std::move(*input));
         else
-            new (dest) Type(*source);
+            new (output) Type(*input);
+        if constexpr (DestroyInput)
+            input->~Type();
     }
 
-    /** @brief Helper used to perfect forward move / copy assignment */
-    template<typename Type, bool ForceCopy = false>
-    void ForwardAssign(Type *dest, Type *source) noexcept(NothrowCopyOrMoveAssign<Type>) {
+    /** @brief Helper used to assign 'output' by forwarding 'input' */
+    template<typename Type, bool ForceCopy = false, bool DestroyInput>
+    void ForwardAssign(Type *output, Type *input) noexcept(NothrowCopyOrMoveAssign<Type>) {
         if constexpr (!ForceCopy && std::is_move_assignable_v<Type>)
-            *dest = std::move(*source);
+            *output = std::move(*input);
         else
-            *dest = *source;
+            *output = *input;
+        if constexpr (DestroyInput)
+            input->~Type();
+
+    }
+
+    /** @brief Helper used to construct a range of 'output' by forwarding 'inputs' */
+    template<typename Type, bool ForceCopy = false, bool DestroyInput = false>
+    void ForwardConstructRange(Type *outputs, Type *inputs, const std::size_t count) {
+        if constexpr (std::is_trivially_copyable_v<Type>)
+            std::copy_n(inputs, count, outputs);
+        else {
+            for (auto i = 0ul; i < count; ++i)
+                ForwardConstruct<Type, ForceCopy, DestroyInput>(inputs + i, outputs + i);
+        }
+    }
+
+    /** @brief Helper used to assign a range of 'outputs' by forwarding 'inputs' */
+    template<typename Type, bool ForceCopy = false, bool DestroyInput = false>
+    void ForwardAssignRange(Type *outputs, Type *inputs, const std::size_t count) {
+        if constexpr (std::is_trivially_copyable_v<Type>)
+            std::copy_n(inputs, count, outputs);
+        else {
+            for (auto i = 0ul; i < count; ++i)
+                ForwardAssign<Type, ForceCopy, DestroyInput>(inputs + i, outputs + i);
+        }
     }
 
     /** @brief Theorical cacheline size */
