@@ -57,6 +57,13 @@ TEST(SPSCQueue, RangePushPop)
         for (auto size = queueSize; size > 0; --size)
             test(queue, size);
     }
+
+    Core::SPSCQueue<char> queue(maxQueueSize);
+    char tmp[maxQueueSize * 2];
+    for (auto &c : tmp)
+        c = 42;
+    ASSERT_EQ(queue.pushRange(tmp, maxQueueSize * 2), maxQueueSize);
+    ASSERT_EQ(queue.popRange(tmp, maxQueueSize * 2), maxQueueSize);
 }
 
 TEST(SPSCQueue, InstensiveThreading)

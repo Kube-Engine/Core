@@ -63,6 +63,7 @@ template<typename Type>
 template<bool AllowLess, bool ForceCopy>
 std::size_t kF::Core::SPSCQueue<Type>::pushRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>)
 {
+    auto toPush = count;
     const auto tail = _tail.load(std::memory_order_relaxed);
     const auto capacity = _tailCache.buffer.capacity;
     auto head = _tailCache.value;
@@ -70,31 +71,36 @@ std::size_t kF::Core::SPSCQueue<Type>::pushRangeImpl(Type *data, const std::size
 
     if (available > capacity) [[unlikely]]
         available -= capacity;
-    if (count >= available) [[unlikely]] {
+    if (toPush >= available) [[unlikely]] {
         head = _tailCache.value = _head.load(std::memory_order_acquire);
         available = capacity - (tail - head);
         if (available > capacity) [[unlikely]]
             available -= capacity;
-        if (count >= available) [[unlikely]]
-            return 0;
+        if (toPush >= available) [[unlikely]] {
+            if constexpr (AllowLess)
+                toPush = available - 1;
+            else
+                return 0;
+        }
     }
-    auto next = tail + count;
+    auto next = tail + toPush;
     if (next >= capacity) [[unlikely]] {
         next -= capacity;
-        const auto split = count - next;
+        const auto split = toPush - next;
         Utils::ForwardConstructRange<Type, ForceCopy, false>(_tailCache.buffer.data + tail, data, split);
         Utils::ForwardConstructRange<Type, ForceCopy, false>(_tailCache.buffer.data, data + split, next);
     } else {
-        Utils::ForwardConstructRange<Type, ForceCopy, false>(_tailCache.buffer.data + tail, data, count);
+        Utils::ForwardConstructRange<Type, ForceCopy, false>(_tailCache.buffer.data + tail, data, toPush);
     }
     _tail.store(next, std::memory_order_release);
-    return count;
+    return toPush;
 }
 
 template<typename Type>
 template<bool AllowLess>
 std::size_t kF::Core::SPSCQueue<Type>::popRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>)
 {
+    auto toPop = count;
     const auto head = _head.load(std::memory_order_relaxed);
     const auto capacity = _headCache.buffer.capacity;
     auto tail = _headCache.value;
@@ -107,20 +113,24 @@ std::size_t kF::Core::SPSCQueue<Type>::popRangeImpl(Type *data, const std::size_
         available = tail - head;
         if (available > capacity) [[unlikely]]
             available += capacity;
-        if (count > available) [[unlikely]]
-            return 0;
+        if (toPop > available) [[unlikely]] {
+            if constexpr (AllowLess)
+                toPop = available;
+            else
+                return 0;
+        }
     }
-    auto next = head + count;
+    auto next = head + toPop;
     if (next >= capacity) [[unlikely]] {
         next -= capacity;
-        auto split = count - next;
+        auto split = toPop - next;
         Utils::ForwardAssignRange<Type, false, true>(data, _headCache.buffer.data + head, split);
         Utils::ForwardAssignRange<Type, false, true>(data + split, _headCache.buffer.data, next);
     } else {
-        Utils::ForwardAssignRange<Type, false, true>(data, _headCache.buffer.data + head, count);
+        Utils::ForwardAssignRange<Type, false, true>(data, _headCache.buffer.data + head, toPop);
     }
     _head.store(next, std::memory_order_release);
-    return count;
+    return toPop;
 }
 
 template<typename Type>
