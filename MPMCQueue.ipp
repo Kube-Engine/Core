@@ -3,7 +3,7 @@
  * @ Description: MPMC Queue
  */
 
-#include "MPMCQueue.hpp"
+#include <stdexcept>
 
 template<typename Type>
 kF::Core::MPMCQueue<Type>::MPMCQueue(const std::size_t capacity)
