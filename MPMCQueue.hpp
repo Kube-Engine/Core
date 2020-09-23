@@ -49,19 +49,19 @@ public:
     MPMCQueue(const std::size_t size);
 
     /** @brief Destruct and release all memory (unsafe) */
-    ~MPMCQueue(void) noexcept(std::is_nothrow_destructible_v<Type>);
+    ~MPMCQueue(void) noexcept_destructible(Type);
 
     /** @brief Push a single element into the queue
      *  @return true if the element has been inserted */
     template<bool MoveOnSuccess = false, typename ...Args>
-    [[nodiscard]] inline bool push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>);
+    [[nodiscard]] bool push(Args &&...args) noexcept_constructible(Type, Args...);
 
     /** @brief Pop a single element from the queue
      *  @return true if an element has been extracted */
-    [[nodiscard]] inline bool pop(Type &value) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>);
+    [[nodiscard]] bool pop(Type &value) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)));
 
     /** @brief Clear all elements of the queue (unsafe) */
-    void clear(void) noexcept(std::is_nothrow_destructible_v<Type>) { for (Type tmp; pop(tmp);); }
+    void clear(void) noexcept_destructible(Type) { for (Type tmp; pop(tmp);); }
 
 private:
     KF_ALIGN_CACHELINE std::atomic<std::size_t> _tail { 0 }; // Tail accessed by producers

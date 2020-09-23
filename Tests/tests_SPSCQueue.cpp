@@ -68,7 +68,7 @@ TEST(SPSCQueue, RangePushPop)
 
 TEST(SPSCQueue, InstensiveThreading)
 {
-    constexpr auto Counter = 10000000;
+    constexpr auto Counter = 10000;
     constexpr std::size_t queueSize = 4096;
 
     Core::SPSCQueue<int> queue(queueSize);

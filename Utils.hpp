@@ -8,6 +8,27 @@
 #include <type_traits>
 #include <cinttypes>
 
+/** @brief Various exception helpers */
+#define nothrow_constructible(Type, ...) std::is_nothrow_constructible_v<Type __VA_OPT__(,) __VA_ARGS__>
+#define nothrow_copy_constructible(Type) std::is_nothrow_copy_constructible_v<Type>
+#define nothrow_move_constructible(Type) std::is_nothrow_move_constructible_v<Type>
+#define nothrow_copy_assignable(Type) std::is_nothrow_copy_assignable_v<Type>
+#define nothrow_move_assignable(Type) std::is_nothrow_move_assignable_v<Type>
+#define nothrow_destructible(Type) std::is_nothrow_destructible_v<Type>
+#define nothrow_invokable(Function, ...) std::is_nothrow_invokable_v<Function __VA_OPT__(,) __VA_ARGS__>
+#define nothrow_expr(Expression) noexcept(Expression)
+
+/** @brief Various noexcept helpers */
+#define noexcept_constructible(Type, ...) noexcept(nothrow_constructible(Type __VA_OPT__(,) __VA_ARGS__))
+#define noexcept_copy_constructible(Type) noexcept(nothrow_copy_constructible(Type))
+#define noexcept_move_constructible(Type) noexcept(nothrow_move_constructible(Type))
+#define noexcept_copy_assignable(Type) noexcept(nothrow_copy_assignable(Type))
+#define noexcept_move_assignable(Type) noexcept(nothrow_move_assignable(Type))
+#define noexcept_destructible(Type) noexcept(nothrow_destructible(Type))
+#define noexcept_invokable(Function, ...) noexcept(nothrow_invokable(Function __VA_OPT__(,) __VA_ARGS__))
+#define noexcept_expr(Expression) noexcept(nothrow_expr(Expression))
+
+/** @brief Align a variable / structure to cacheline size */
 #define KF_ALIGN_CACHELINE alignas(kF::Core::Utils::CacheLineSize)
 #define KF_ALIGN_CACHELINE2 alignas(kF::Core::Utils::CacheLineSize * 2)
 
@@ -16,27 +37,10 @@
 
 namespace kF::Core::Utils
 {
-    /** @brief Helper used to use the right noexcept mode uppon forwarding constructor */
-    template<typename Type, bool ForceCopy, bool Destruct>
-    constexpr bool NothrowCopyOrMoveConstruct = [] {
-        if constexpr (!ForceCopy && std::is_move_constructible_v<Type>)
-            return std::is_nothrow_move_constructible_v<Type> && (!Destruct || std::is_nothrow_destructible_v<Type>);
-        else
-            return std::is_nothrow_copy_constructible_v<Type> && (!Destruct || std::is_nothrow_destructible_v<Type>);
-    }();
-
-    /** @brief Helper used to use the right noexcept mode uppon forwarding assignment */
-    template<typename Type, bool ForceCopy, bool Destruct>
-    constexpr bool NothrowCopyOrMoveAssign = [] {
-        if constexpr (!ForceCopy && std::is_move_assignable_v<Type>)
-            return std::is_nothrow_move_assignable_v<Type> && (!Destruct || std::is_nothrow_destructible_v<Type>);
-        else
-            return std::is_nothrow_copy_assignable_v<Type> && (!Destruct || std::is_nothrow_destructible_v<Type>);
-    }();
-
     /** @brief Helper used to construct 'output' by forwarding 'input' */
     template<typename Type, bool ForceCopy = false, bool DestructInput = false>
-    void ForwardConstruct(Type *output, Type *input) noexcept(NothrowCopyOrMoveConstruct<Type, ForceCopy, DestructInput>) {
+    void ForwardConstruct(Type *output, Type *input) noexcept((!DestructInput || nothrow_destructible(Type)) && ((!ForceCopy || std::is_move_constructible_v<Type>) ? nothrow_move_constructible(Type) : nothrow_copy_constructible(Type)))
+    {
         if constexpr (!ForceCopy && std::is_move_assignable_v<Type>)
             new (output) Type(std::move(*input));
         else
@@ -47,7 +51,8 @@ namespace kF::Core::Utils
 
     /** @brief Helper used to assign 'output' by forwarding 'input' */
     template<typename Type, bool ForceCopy = false, bool DestructInput>
-    void ForwardAssign(Type *output, Type *input) noexcept(NothrowCopyOrMoveAssign<Type, ForceCopy, DestructInput>) {
+    void ForwardAssign(Type *output, Type *input) noexcept((!DestructInput || nothrow_destructible(Type)) && ((!ForceCopy || std::is_move_assignable_v<Type>) ? nothrow_move_assignable(Type) : nothrow_copy_assignable(Type)))
+    {
         if constexpr (!ForceCopy && std::is_move_assignable_v<Type>)
             *output = std::move(*input);
         else
@@ -59,7 +64,8 @@ namespace kF::Core::Utils
 
     /** @brief Helper used to construct a range of 'output' by forwarding 'inputs' */
     template<typename Type, bool ForceCopy = false, bool DestructInput = false>
-    void ForwardConstructRange(Type *outputs, Type *inputs, const std::size_t count) noexcept(NothrowCopyOrMoveConstruct<Type, ForceCopy, DestructInput>) {
+    void ForwardConstructRange(Type *outputs, Type *inputs, const std::size_t count) noexcept((!DestructInput || nothrow_destructible(Type)) && ((!ForceCopy || std::is_move_constructible_v<Type>) ? nothrow_move_constructible(Type) : nothrow_copy_constructible(Type)))
+    {
         if constexpr (std::is_trivially_copyable_v<Type>)
             std::copy_n(inputs, count, outputs);
         else {
@@ -70,7 +76,8 @@ namespace kF::Core::Utils
 
     /** @brief Helper used to assign a range of 'outputs' by forwarding 'inputs' */
     template<typename Type, bool ForceCopy = false, bool DestructInput = false>
-    void ForwardAssignRange(Type *outputs, Type *inputs, const std::size_t count) noexcept(NothrowCopyOrMoveAssign<Type, ForceCopy, DestructInput>) {
+    void ForwardAssignRange(Type *outputs, Type *inputs, const std::size_t count) noexcept((!DestructInput || nothrow_destructible(Type)) && ((!ForceCopy || std::is_move_assignable_v<Type>) ? nothrow_move_assignable(Type) : nothrow_copy_assignable(Type)))
+    {
         if constexpr (std::is_trivially_copyable_v<Type>)
             std::copy_n(inputs, count, outputs);
         else {

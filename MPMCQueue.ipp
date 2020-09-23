@@ -21,7 +21,7 @@ kF::Core::MPMCQueue<Type>::MPMCQueue(const std::size_t capacity)
 }
 
 template<typename Type>
-kF::Core::MPMCQueue<Type>::~MPMCQueue(void) noexcept(std::is_nothrow_destructible_v<Type>)
+kF::Core::MPMCQueue<Type>::~MPMCQueue(void) noexcept_destructible(Type)
 {
     clear();
     std::free(_tailCache.buffer.data);
@@ -29,7 +29,7 @@ kF::Core::MPMCQueue<Type>::~MPMCQueue(void) noexcept(std::is_nothrow_destructibl
 
 template<typename Type>
 template<bool MoveOnSuccess, typename ...Args>
-bool kF::Core::MPMCQueue<Type>::push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+inline bool kF::Core::MPMCQueue<Type>::push(Args &&...args) noexcept_constructible(Type, Args...)
 {
     auto pos = _tail.load(std::memory_order_relaxed);
     auto * const data = _tailCache.buffer.data;
@@ -56,7 +56,7 @@ bool kF::Core::MPMCQueue<Type>::push(Args &&...args) noexcept(std::is_nothrow_co
 }
 
 template<typename Type>
-bool kF::Core::MPMCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type, false, true>)
+inline bool kF::Core::MPMCQueue<Type>::pop(Type &value) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)))
 {
     auto pos = _head.load(std::memory_order_relaxed);
     const auto mask = _headCache.buffer.mask;

@@ -33,8 +33,8 @@ TEST(MPMCQueue, SinglePushPop)
 
 TEST(MPMCQueue, InstensiveThreading)
 {
-    constexpr auto ThreadCount = 8;
-    constexpr auto Counter = 10000000;
+    constexpr auto ThreadCount = 4;
+    constexpr auto Counter = 10000;
     constexpr std::size_t queueSize = 4096;
 
     static std::atomic<bool> running { true };

@@ -48,56 +48,56 @@ public:
     SPSCQueue(const std::size_t capacity, const bool usedAsBuffer = true);
 
     /** @brief Destruct and release all memory (unsafe) */
-    ~SPSCQueue(void) noexcept(std::is_nothrow_destructible_v<Type>);
+    ~SPSCQueue(void) noexcept_destructible(Type);
 
     /** @brief Push a single element into the queue
      *  @return true if the element has been inserted */
     template<typename ...Args>
-    [[nodiscard]] inline bool push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>);
+    [[nodiscard]] bool push(Args &&...args) noexcept_constructible(Type, Args...);
 
     /** @brief Pop a single element from the queue
      *  @return true if an element has been extracted */
-    [[nodiscard]] inline bool pop(Type &value) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>);
+    [[nodiscard]] bool pop(Type &value) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)));
 
     /** @brief Push exactly 'count' elements into the queue
      *  @tparam ForceCopy If true, will prevent to move construct elements
      *  @return Success on true */
     template<bool ForceCopy = false>
-    [[nodiscard]] bool tryPushRange(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>) { return pushRangeImpl<false, ForceCopy>(data, count); }
+    [[nodiscard]] bool tryPushRange(Type *data, const std::size_t count) noexcept(!ForceCopy && std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)) { return pushRangeImpl<false, ForceCopy>(data, count); }
 
     /** @brief Pop exactly 'count' elements from the queue
      *  @return Success on true */
-    [[nodiscard]] bool tryPopRange(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>) { return popRangeImpl<false>(data, count); }
+    [[nodiscard]] bool tryPopRange(Type *data, const std::size_t count) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type))) { return popRangeImpl<false>(data, count); }
 
     /** @brief Push up to 'count' elements into the queue
      *  @tparam ForceCopy If true, will prevent to move construct elements
      *  @return The number of extracted elements */
     template<bool ForceCopy = false>
-    [[nodiscard]] std::size_t pushRange(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>) { return pushRangeImpl<true, ForceCopy>(data, count); }
+    [[nodiscard]] std::size_t pushRange(Type *data, const std::size_t count) noexcept(!ForceCopy && std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)) { return pushRangeImpl<true, ForceCopy>(data, count); }
 
     /** @brief Pop up to 'count' elements from the queue
      *  @return The number of extracted elements */
-    [[nodiscard]] std::size_t popRange(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>) { return popRangeImpl<true>(data, count); }
+    [[nodiscard]] std::size_t popRange(Type *data, const std::size_t count) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type))) { return popRangeImpl<true>(data, count); }
 
     /** @brief Clear all elements of the queue (unsafe) */
-    void clear(void) noexcept(std::is_nothrow_destructible_v<Type>);
+    void clear(void) noexcept_destructible(Type);
 
 private:
     KF_ALIGN_CACHELINE std::atomic<size_t> _tail { 0 }; // Tail accessed by both producer and consumer
-    KF_ALIGN_CACHELINE Cache _tailCache;
+    KF_ALIGN_CACHELINE Cache _tailCache {}; // Cache accessed by consumer thread
 
     KF_ALIGN_CACHELINE std::atomic<size_t> _head { 0 }; // Head accessed by both producer and consumer
-    KF_ALIGN_CACHELINE Cache _headCache;
+    KF_ALIGN_CACHELINE Cache _headCache {}; // Cache accessed by producer thread
 
     /** @brief Copy and move constructors disabled */
     SPSCQueue(const SPSCQueue &other) = delete;
     SPSCQueue(SPSCQueue &&other) = delete;
 
     template<bool AllowLess, bool ForceCopy>
-    [[nodiscard]] inline std::size_t pushRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>);
+    [[nodiscard]] std::size_t pushRangeImpl(Type *data, const std::size_t count) noexcept(!ForceCopy && std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type));
 
     template<bool AllowLess>
-    [[nodiscard]] inline std::size_t popRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>);
+    [[nodiscard]] std::size_t popRangeImpl(Type *data, const std::size_t count) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)));
 };
 
 static_assert(sizeof(kF::Core::SPSCQueue<int>) == 4 * kF::Core::Utils::CacheLineSize);

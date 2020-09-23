@@ -7,13 +7,14 @@ template<typename Type>
 kF::Core::SPSCQueue<Type>::SPSCQueue(const std::size_t capacity, const bool usedAsBuffer)
 {
     _tailCache.buffer.capacity = capacity + usedAsBuffer;
-    if (_tailCache.buffer.data = reinterpret_cast<Type *>(std::malloc(sizeof(Type) * _tailCache.buffer.capacity)); !_tailCache.buffer.data)
+    _tailCache.buffer.data = reinterpret_cast<Type *>(std::malloc(sizeof(Type) * _tailCache.buffer.capacity));
+    if (!_tailCache.buffer.data)
         throw std::runtime_error("Core::SPSCQueue: Malloc failed");
     _headCache.buffer = _tailCache.buffer;
 }
 
 template<typename Type>
-kF::Core::SPSCQueue<Type>::~SPSCQueue(void) noexcept(std::is_nothrow_destructible_v<Type>)
+kF::Core::SPSCQueue<Type>::~SPSCQueue(void) noexcept_destructible(Type)
 {
     clear();
     std::free(_tailCache.buffer.data);
@@ -21,7 +22,7 @@ kF::Core::SPSCQueue<Type>::~SPSCQueue(void) noexcept(std::is_nothrow_destructibl
 
 template<typename Type>
 template<typename ...Args>
-bool kF::Core::SPSCQueue<Type>::push(Args &&...args) noexcept(std::is_nothrow_constructible_v<Type, Args...>)
+inline bool kF::Core::SPSCQueue<Type>::push(Args &&...args) noexcept_constructible(Type, Args...)
 {
     static_assert(std::is_constructible<Type, Args...>::value, "Type must be constructible from Args...");
 
@@ -41,7 +42,7 @@ bool kF::Core::SPSCQueue<Type>::push(Args &&...args) noexcept(std::is_nothrow_co
 }
 
 template<typename Type>
-bool kF::Core::SPSCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::NothrowCopyOrMoveAssign<Type, false, true>)
+inline bool kF::Core::SPSCQueue<Type>::pop(Type &value) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)))
 {
     const auto head = _head.load(std::memory_order_relaxed);
 
@@ -61,7 +62,7 @@ bool kF::Core::SPSCQueue<Type>::pop(Type &value) noexcept(kF::Core::Utils::Nothr
 
 template<typename Type>
 template<bool AllowLess, bool ForceCopy>
-std::size_t kF::Core::SPSCQueue<Type>::pushRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveConstruct<Type, ForceCopy, false>)
+inline std::size_t kF::Core::SPSCQueue<Type>::pushRangeImpl(Type *data, const std::size_t count) noexcept(!ForceCopy && std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type))
 {
     auto toPush = count;
     const auto tail = _tail.load(std::memory_order_relaxed);
@@ -98,7 +99,7 @@ std::size_t kF::Core::SPSCQueue<Type>::pushRangeImpl(Type *data, const std::size
 
 template<typename Type>
 template<bool AllowLess>
-std::size_t kF::Core::SPSCQueue<Type>::popRangeImpl(Type *data, const std::size_t count) noexcept(Utils::NothrowCopyOrMoveAssign<Type, false, true>)
+inline std::size_t kF::Core::SPSCQueue<Type>::popRangeImpl(Type *data, const std::size_t count) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)))
 {
     auto toPop = count;
     const auto head = _head.load(std::memory_order_relaxed);
@@ -134,7 +135,7 @@ std::size_t kF::Core::SPSCQueue<Type>::popRangeImpl(Type *data, const std::size_
 }
 
 template<typename Type>
-void kF::Core::SPSCQueue<Type>::clear(void) noexcept(std::is_nothrow_destructible_v<Type>)
+void kF::Core::SPSCQueue<Type>::clear(void) noexcept_destructible(Type)
 {
     for (Type type; pop(type););
 }

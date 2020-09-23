@@ -15,6 +15,6 @@ namespace kF
 
     namespace Literal
     {
-        inline std::basic_string<char> operator""_str(const char *data, const std::size_t size) { return std::basic_string<char>{ data, size }; }
+        std::basic_string<char> operator""_str(const char *data, const std::size_t size) { return std::basic_string<char>{ data, size }; }
     }
 }
