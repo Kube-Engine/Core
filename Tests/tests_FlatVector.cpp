@@ -72,6 +72,13 @@ TEST(FlatVector, Resize)
         ++i;
     }
     ASSERT_EQ(i, count);
+    std::vector<std::string> tmp(count * 2, str);
+    vector.resize(std::make_move_iterator(tmp.begin()), std::make_move_iterator(tmp.end()));
+    ASSERT_EQ(vector.size(), count * 2);
+    for (auto &elem : tmp)
+        ASSERT_TRUE(elem.empty());
+    for (auto &elem : vector)
+        ASSERT_EQ(elem, str);
 }
 
 TEST(FlatVector, Reserve)
@@ -90,4 +97,38 @@ TEST(FlatVector, Reserve)
     vector.reserve(count - 1);
     ASSERT_EQ(vector.size(), 0);
     ASSERT_EQ(vector.capacity(), count - 1);
+}
+
+TEST(FlatVector, InsertIterators)
+{
+    std::vector<int> tmp(10, 42);
+    std::vector<int> tmp2(5, 32);
+    Core::FlatVector<int> vector(tmp.begin(), tmp.end());
+
+    ASSERT_EQ(vector.size(), 10ul);
+    for (auto elem : vector)
+        ASSERT_EQ(elem, 42);
+    vector.insert(vector.begin() + 1, tmp2.begin(), tmp2.end());
+    for (auto i = 0ul; i < 5; ++i)
+        ASSERT_EQ(vector[1 + i], 32);
+    vector.insert(vector.end(), { 45, 46 });
+    ASSERT_EQ(vector.at(vector.size() - 2), 45);
+    ASSERT_EQ(vector.back(), 46);
+}
+
+TEST(FlatVector, InsertFill)
+{
+    Core::FlatVector<int> vector;
+
+    vector.insert(vector.begin(), 2, 42);
+    ASSERT_EQ(vector.size(), 2);
+    for (auto &elem : vector)
+        ASSERT_EQ(elem, 42);
+    vector.insert(vector.begin(), 1, 32);
+    ASSERT_EQ(vector.front(), 32);
+    vector.insert(vector.end(), 1, 32);
+    ASSERT_EQ(vector.back(), 32);
+    vector.insert(vector.end(), 42, 32);
+    for (auto i = 4; i < vector.size<false>(); ++i)
+        ASSERT_EQ(vector[i], 32);
 }
