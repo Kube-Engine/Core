@@ -14,10 +14,12 @@ set(KubeCoreSources
     ${KubeCoreDir}/SPSCQueue.ipp
     ${KubeCoreDir}/MPMCQueue.hpp
     ${KubeCoreDir}/MPMCQueue.ipp
-    ${KubeCoreDir}/FlatVector.hpp
-    ${KubeCoreDir}/FlatVector.ipp
     ${KubeCoreDir}/HeapArray.hpp
     ${KubeCoreDir}/HeapArray.ipp
+    ${KubeCoreDir}/FlatVector.hpp
+    ${KubeCoreDir}/FlatVector.ipp
+    ${KubeCoreDir}/FlatString.hpp
+    ${KubeCoreDir}/FlatString.ipp
 )
 
 add_library(${PROJECT_NAME} ${KubeCoreSources})

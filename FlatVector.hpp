@@ -35,6 +35,12 @@ public:
     /** @brief Default constructor */
     FlatVector(void) noexcept = default;
 
+    /** @brief Copy constructor */
+    FlatVector(const FlatVector &other) noexcept_copy_constructible(Type) { resize(other.begin(), other.end()); }
+
+    /** @brief Move constructor */
+    FlatVector(FlatVector &&other) noexcept { swap(other); }
+
     /** @brief Insert constructor */
     template<std::input_iterator InputIterator>
     FlatVector(const InputIterator from, const InputIterator to)
@@ -55,6 +61,15 @@ public:
 
     /** @brief Destroy constructor */
     ~FlatVector(void) noexcept_destructible(Type) { release(); }
+
+    /** @brief Copy assignment */
+    FlatVector &operator=(const FlatVector &other) noexcept_copy_constructible(Type) { resize(other.begin(), other.end()); return *this; }
+
+    /** @brief Move assignment */
+    FlatVector &operator=(FlatVector &&other) noexcept { swap(other); return *this; }
+
+    /** @brief Swap two instances */
+    void swap(FlatVector &other) noexcept { std::swap(_ptr, other._ptr); }
 
     /** @brief Get raw data pointer */
     [[nodiscard]] Type *data(void) noexcept { return reinterpret_cast<Type *>(_ptr + 1); }
