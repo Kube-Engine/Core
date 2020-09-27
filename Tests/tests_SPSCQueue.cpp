@@ -38,10 +38,10 @@ TEST(SPSCQueue, RangePushPop)
         char tmp[size];
         for (auto &c : tmp)
             c = ref;
-        ASSERT_TRUE(queue.tryPushRange(tmp, size));
+        ASSERT_TRUE(queue.tryPushRange(tmp, tmp + size));
         for (auto &c : tmp)
             c = 0;
-        ASSERT_TRUE(queue.tryPopRange(tmp, size));
+        ASSERT_TRUE(queue.tryPopRange(tmp, tmp + size));
         for (const auto c : tmp)
             ASSERT_EQ(c, ref);
     };
@@ -49,9 +49,10 @@ TEST(SPSCQueue, RangePushPop)
     constexpr std::size_t maxQueueSize = 4096;
 
     for (auto queueSize = 1ul; queueSize < maxQueueSize; queueSize *= 2) {
+        char tmp[queueSize];
         Core::SPSCQueue<char> queue(queueSize);
-        ASSERT_FALSE(queue.tryPushRange(nullptr, queueSize + 1));
-        ASSERT_FALSE(queue.tryPopRange(nullptr, 1));
+        ASSERT_FALSE(queue.tryPushRange(&tmp[0], &tmp[queueSize + 1]));
+        ASSERT_FALSE(queue.tryPopRange(&tmp[0], &tmp[queueSize + 1]));
         for (auto size = 1ul; size <= queueSize; ++size)
             test(queue, size);
         for (auto size = queueSize; size > 0; --size)
@@ -62,8 +63,8 @@ TEST(SPSCQueue, RangePushPop)
     char tmp[maxQueueSize * 2];
     for (auto &c : tmp)
         c = 42;
-    ASSERT_EQ(queue.pushRange(tmp, maxQueueSize * 2), maxQueueSize);
-    ASSERT_EQ(queue.popRange(tmp, maxQueueSize * 2), maxQueueSize);
+    ASSERT_EQ(queue.pushRange(tmp, tmp + maxQueueSize * 2), maxQueueSize);
+    ASSERT_EQ(queue.popRange(tmp, tmp + maxQueueSize * 2), maxQueueSize);
 }
 
 TEST(SPSCQueue, InstensiveThreading)

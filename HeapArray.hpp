@@ -44,8 +44,9 @@ public:
     [[nodiscard]] bool empty(void) const noexcept { return !_size; }
 
     /** @brief Allocate a new array */
-    template<typename ...Args>
-    void allocate(const std::size_t size, Args &&...args) noexcept(nothrow_ndebug && nothrow_constructible(Type, Args...) && nothrow_destructible(Type));
+    template<typename ...Args> requires std::constructible_from<Type, Args...>
+    void allocate(const std::size_t size, Args &&...args)
+        noexcept(nothrow_ndebug && nothrow_constructible(Type, Args...) && nothrow_destructible(Type));
 
     /** @brief Clear the array and release memory */
     void release(void) noexcept_destructible(Type);

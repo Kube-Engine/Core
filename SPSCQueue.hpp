@@ -12,7 +12,7 @@
 
 namespace kF::Core
 {
-    template<typename Type>
+    template<typename Type> requires std::copy_constructible<Type> || std::move_constructible<Type>
     class SPSCQueue;
 }
 
@@ -24,7 +24,7 @@ namespace kF::Core
  *
  * @tparam Type to be inserted
  */
-template<typename Type>
+template<typename Type> requires std::copy_constructible<Type> || std::move_constructible<Type>
 class KF_ALIGN_CACHELINE2 kF::Core::SPSCQueue
 {
 public:
@@ -45,7 +45,7 @@ public:
     /** @brief Default constructor initialize the queue
      * If 'usedAsBuffer' is true, capacity will be increased by 1 because the queue implementation needs one unused value when the queue is full
     */
-    SPSCQueue(const std::size_t capacity, const bool usedAsBuffer = true);
+    SPSCQueue(const std::size_t capacity, const bool usedAsBuffer = true) noexcept;
 
     /** @brief Destruct and release all memory (unsafe) */
     ~SPSCQueue(void) noexcept_destructible(Type);
@@ -53,31 +53,44 @@ public:
     /** @brief Push a single element into the queue
      *  @return true if the element has been inserted */
     template<typename ...Args>
-    [[nodiscard]] bool push(Args &&...args) noexcept_constructible(Type, Args...);
+    [[nodiscard]] bool push(Args &&...args)
+        noexcept_constructible(Type, Args...)
+        requires std::constructible_from<Type, Args...>;
 
     /** @brief Pop a single element from the queue
      *  @return true if an element has been extracted */
-    [[nodiscard]] bool pop(Type &value) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)));
+    [[nodiscard]] bool pop(Type &value)
+        noexcept(nothrow_destructible(Type) && nothrow_forward_assignable(Type));
 
     /** @brief Push exactly 'count' elements into the queue
      *  @tparam ForceCopy If true, will prevent to move construct elements
      *  @return Success on true */
-    template<bool ForceCopy = false>
-    [[nodiscard]] bool tryPushRange(Type *data, const std::size_t count) noexcept(!ForceCopy && std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)) { return pushRangeImpl<false, ForceCopy>(data, count); }
+    template<std::input_iterator InputIterator>
+    [[nodiscard]] bool tryPushRange(const InputIterator from, const InputIterator to)
+        noexcept_forward_constructible(Type)
+        { return pushRangeImpl<false>(from, to); }
 
     /** @brief Pop exactly 'count' elements from the queue
      *  @return Success on true */
-    [[nodiscard]] bool tryPopRange(Type *data, const std::size_t count) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type))) { return popRangeImpl<false>(data, count); }
+    template<typename OutputIterator> requires std::output_iterator<OutputIterator, Type>
+    [[nodiscard]] bool tryPopRange(const OutputIterator from, const OutputIterator to)
+        noexcept(nothrow_destructible(Type) && nothrow_forward_assignable(Type))
+        { return popRangeImpl<false>(from, to); }
 
     /** @brief Push up to 'count' elements into the queue
      *  @tparam ForceCopy If true, will prevent to move construct elements
      *  @return The number of extracted elements */
-    template<bool ForceCopy = false>
-    [[nodiscard]] std::size_t pushRange(Type *data, const std::size_t count) noexcept(!ForceCopy && std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)) { return pushRangeImpl<true, ForceCopy>(data, count); }
+    template<std::input_iterator InputIterator>
+    [[nodiscard]] std::size_t pushRange(const InputIterator from, const InputIterator to)
+        noexcept_forward_assignable(Type)
+        { return pushRangeImpl<true>(from, to); }
 
     /** @brief Pop up to 'count' elements from the queue
      *  @return The number of extracted elements */
-    [[nodiscard]] std::size_t popRange(Type *data, const std::size_t count) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type))) { return popRangeImpl<true>(data, count); }
+    template<typename OutputIterator> requires std::output_iterator<OutputIterator, Type>
+    [[nodiscard]] std::size_t popRange(const OutputIterator from, const OutputIterator to)
+        noexcept(nothrow_destructible(Type) && nothrow_forward_assignable(Type))
+        { return popRangeImpl<true>(from, to); }
 
     /** @brief Clear all elements of the queue (unsafe) */
     void clear(void) noexcept_destructible(Type);
@@ -93,11 +106,13 @@ private:
     SPSCQueue(const SPSCQueue &other) = delete;
     SPSCQueue(SPSCQueue &&other) = delete;
 
-    template<bool AllowLess, bool ForceCopy>
-    [[nodiscard]] std::size_t pushRangeImpl(Type *data, const std::size_t count) noexcept(!ForceCopy && std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type));
+    template<bool AllowLess, std::input_iterator InputIterator>
+    [[nodiscard]] std::size_t pushRangeImpl(const InputIterator from, const InputIterator to)
+        noexcept(nothrow_forward_iterator_constructible(InputIterator));
 
-    template<bool AllowLess>
-    [[nodiscard]] std::size_t popRangeImpl(Type *data, const std::size_t count) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)));
+    template<bool AllowLess, typename OutputIterator> requires std::output_iterator<OutputIterator, Type>
+    [[nodiscard]] std::size_t popRangeImpl(const OutputIterator from, const OutputIterator to)
+        noexcept(nothrow_destructible(Type) && nothrow_forward_assignable(Type));
 };
 
 static_assert(sizeof(kF::Core::SPSCQueue<int>) == 4 * kF::Core::Utils::CacheLineSize);

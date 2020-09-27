@@ -131,7 +131,7 @@ inline void kF::Core::FlatVector<Type>::resize(const std::size_t count, const Ty
 template<typename Type>
 template<std::input_iterator InputIterator>
 inline void kF::Core::FlatVector<Type>::resize(const InputIterator from, const InputIterator to)
-    noexcept(nothrow_destructible(Type) && nothrow_forward_iterator_constructible(Type))
+    noexcept(nothrow_destructible(Type) && nothrow_forward_iterator_constructible(InputIterator))
 {
     const auto count = to - from;
 

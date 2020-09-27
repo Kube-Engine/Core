@@ -135,7 +135,7 @@ public:
     /** @brief Resize the vector with input iterators */
     template<std::input_iterator InputIterator>
     void resize(const InputIterator from, const InputIterator to)
-        noexcept(nothrow_destructible(Type) && nothrow_forward_iterator_constructible(Type));
+        noexcept(nothrow_destructible(Type) && nothrow_forward_iterator_constructible(InputIterator));
 
     /** @brief Reserve memory for fast emplace */
     void reserve(const std::size_t count) noexcept_destructible(Type);

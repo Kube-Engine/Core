@@ -29,7 +29,9 @@ kF::Core::MPMCQueue<Type>::~MPMCQueue(void) noexcept_destructible(Type)
 
 template<typename Type>
 template<bool MoveOnSuccess, typename ...Args>
-inline bool kF::Core::MPMCQueue<Type>::push(Args &&...args) noexcept_constructible(Type, Args...)
+inline bool kF::Core::MPMCQueue<Type>::push(Args &&...args)
+    noexcept_constructible(Type, Args...)
+    requires std::constructible_from<Type, Args...>
 {
     auto pos = _tail.load(std::memory_order_relaxed);
     auto * const data = _tailCache.buffer.data;
@@ -56,7 +58,8 @@ inline bool kF::Core::MPMCQueue<Type>::push(Args &&...args) noexcept_constructib
 }
 
 template<typename Type>
-inline bool kF::Core::MPMCQueue<Type>::pop(Type &value) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)))
+inline bool kF::Core::MPMCQueue<Type>::pop(Type &value)
+    noexcept(nothrow_destructible(Type) && nothrow_forward_constructible(Type))
 {
     auto pos = _head.load(std::memory_order_relaxed);
     const auto mask = _headCache.buffer.mask;
@@ -75,7 +78,11 @@ inline bool kF::Core::MPMCQueue<Type>::pop(Type &value) noexcept(nothrow_destruc
         else
             pos = _head.load(std::memory_order_relaxed);
     }
-    Utils::ForwardAssign<Type, false, true>(&value, &cell->data);
+    if constexpr (std::is_move_assignable_v<Type>)
+        value = std::move(cell->data);
+    else
+        value = cell->data;
+    cell->data.~Type();
     cell->sequence.store(pos + mask + 1, std::memory_order_release);
     return true;
 }

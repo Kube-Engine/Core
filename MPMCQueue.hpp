@@ -54,11 +54,14 @@ public:
     /** @brief Push a single element into the queue
      *  @return true if the element has been inserted */
     template<bool MoveOnSuccess = false, typename ...Args>
-    [[nodiscard]] bool push(Args &&...args) noexcept_constructible(Type, Args...);
+    [[nodiscard]] bool push(Args &&...args)
+        noexcept_constructible(Type, Args...)
+        requires std::constructible_from<Type, Args...>;
 
     /** @brief Pop a single element from the queue
      *  @return true if an element has been extracted */
-    [[nodiscard]] bool pop(Type &value) noexcept(nothrow_destructible(Type) && (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_move_constructible(Type)));
+    [[nodiscard]] bool pop(Type &value)
+        noexcept(nothrow_destructible(Type) && nothrow_forward_constructible(Type));
 
     /** @brief Clear all elements of the queue (unsafe) */
     void clear(void) noexcept_destructible(Type) { for (Type tmp; pop(tmp);); }

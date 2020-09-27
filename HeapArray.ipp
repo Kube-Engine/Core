@@ -4,8 +4,9 @@
  */
 
 template<typename Type>
-template<typename ...Args>
-void kF::Core::HeapArray<Type>::allocate(const std::size_t size, Args &&...args) noexcept(nothrow_ndebug && nothrow_constructible(Type, Args...) && nothrow_destructible(Type))
+template<typename ...Args> requires std::constructible_from<Type, Args...>
+void kF::Core::HeapArray<Type>::allocate(const std::size_t size, Args &&...args)
+    noexcept(nothrow_ndebug && nothrow_constructible(Type, Args...) && nothrow_destructible(Type))
 {
     if constexpr (!std::is_trivially_destructible_v<Type>) {
         for (auto &elem : *this)
@@ -20,7 +21,7 @@ void kF::Core::HeapArray<Type>::allocate(const std::size_t size, Args &&...args)
     }
     _size = size;
     for (auto i = 0ul; i < _size; ++i)
-        new (&_data[i]) Type(std::forward<Args>(args)...);
+        new (&_data[i]) Type(args...);
 }
 
 template<typename Type>
