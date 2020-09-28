@@ -206,32 +206,32 @@ kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const It
         return begin();
     }
     std::size_t position = at - begin<false>();
-    if (const auto currentSize = size<false>(), total = currentSize + count; total > capacity<false>()) [[unlikely]] {
+    const auto currentBegin = begin<false>();
+    const auto currentEnd = end<false>();
+    const auto currentSize = size<false>();
+    if (auto total = currentSize + count; total > capacity<false>()) [[unlikely]] {
         const auto tmpSize = currentSize + std::max(currentSize, count);
         const auto tmpPtr = reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * tmpSize));
         const auto tmpData = reinterpret_cast<Type *>(tmpPtr + 1);
         tmpPtr->size = total;
         tmpPtr->capacity = tmpSize;
-        std::uninitialized_move_n(data(), position, tmpData);
-        std::uninitialized_move_n(data() + position, count, tmpData + position + count);
+        std::uninitialized_move_n(currentBegin, position, tmpData);
+        std::uninitialized_move(currentBegin + position, currentEnd, tmpData + position + count);
         std::fill_n(tmpData + position, count, value);
         std::free(_ptr);
         _ptr = tmpPtr;
         return tmpData + position;
-    }
-    const auto tmpBegin = begin<false>();
-    const auto tmpEnd = end<false>();
-    if (const auto after = size<false>() - position; after > count) {
-        std::uninitialized_move(tmpEnd - count, tmpEnd, tmpEnd);
-        std::fill_n(tmpBegin + position, count, value);
+    } else if (const auto after = size<false>() - position; after > count) {
+        std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
+        std::fill_n(currentBegin + position, count, value);
     } else {
         const auto mid = count - after;
-        std::fill_n(tmpEnd, mid, value);
-        std::uninitialized_move(tmpBegin + position, tmpEnd, tmpEnd + mid);
-        std::fill_n(tmpBegin + position, count - mid, value);
+        std::fill_n(currentEnd, mid, value);
+        std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + mid);
+        std::fill_n(currentBegin + position, count - mid, value);
     }
     _ptr->size += count;
-    return tmpBegin + position;
+    return currentBegin + position;
 }
 
 template<typename Type>
