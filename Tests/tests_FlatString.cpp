@@ -16,7 +16,7 @@ TEST(FlatString, Basics)
     std::memcpy(array, value, std::strlen(value));
 
     auto assertStringValue = [value, &array](const auto &str) {
-        ASSERT_NEQ(str, value);
+        ASSERT_EQ(str, value);
         ASSERT_EQ(str, value);
         ASSERT_EQ(str, array);
         ASSERT_EQ(str, std::string(value));
