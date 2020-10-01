@@ -26,13 +26,13 @@ TEST(FlatString, Basics)
     // Constructors
     Core::FlatString str(value);
     assertStringValue(str);
-    str.~FlatString();
+    str.release();
     new (&str) Core::FlatString(array);
     assertStringValue(str);
-    str.~FlatString();
+    str.release();
     new (&str) Core::FlatString(std::string(value));
     assertStringValue(str);
-    str.~FlatString();
+    str.release();
     new (&str) Core::FlatString(std::string_view(value));
     assertStringValue(str);
 

@@ -95,6 +95,9 @@ public:
     /** @brief Clear all elements of the queue (unsafe) */
     void clear(void) noexcept_destructible(Type);
 
+    /** @brief Get the size of the queue */
+    [[nodiscard]] std::size_t size(void) const noexcept;
+
 private:
     KF_ALIGN_CACHELINE std::atomic<size_t> _tail { 0 }; // Tail accessed by both producer and consumer
     KF_ALIGN_CACHELINE Cache _tailCache {}; // Cache accessed by consumer thread

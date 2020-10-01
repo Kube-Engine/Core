@@ -3,6 +3,8 @@
  * @ Description: FlatVector
  */
 
+#pragma once
+
 #include <memory>
 
 #include "Utils.hpp"

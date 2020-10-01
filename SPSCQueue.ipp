@@ -146,7 +146,19 @@ inline std::size_t kF::Core::SPSCQueue<Type>::popRangeImpl(const OutputIterator 
 }
 
 template<typename Type>
-void kF::Core::SPSCQueue<Type>::clear(void) noexcept_destructible(Type)
+inline void kF::Core::SPSCQueue<Type>::clear(void) noexcept_destructible(Type)
 {
     for (Type type; pop(type););
+}
+
+template<typename Type>
+inline std::size_t kF::Core::SPSCQueue<Type>::size(void) const noexcept
+{
+    const auto tail = _tail.load(std::memory_order_seq_cst);
+    const auto capacity = _tailCache.buffer.capacity;
+    const auto head = _head.load(std::memory_order_seq_cst);
+    auto available = tail - head;
+    if (available > capacity) [[unlikely]]
+        available += capacity;
+    return available;
 }

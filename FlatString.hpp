@@ -3,6 +3,8 @@
  * @ Description: FlatString
  */
 
+#pragma once
+
 #include <memory>
 #include <string_view>
 #include <string>
@@ -14,18 +16,20 @@
 namespace kF::Core
 {
     template<typename Type> requires std::copy_constructible<Type>
-    class FlatString;
+    class FlatStringBase;
+
+    using FlatString = FlatStringBase<char>;
 }
 
 /** @brief Flat string is pointer-sized std::string alternative that is NOT NULL TERMINATED
  * The implementation assumes that given character Type will never throw while manipulating it
- * The implementation has same performances as std::string but comes with two weakness :
+ * The implementation comes with two weakness :
  * Because the size and capacity are stored on the heap if you wish to get the vector size and not lookup after that
  * it is slower due to memory indirection
  * Because the string don't have small optimization, it will perform worse than an std::string with short strings
 */
-template<typename Type = char> requires std::copy_constructible<Type>
-class kF::Core::FlatString : public kF::Core::FlatVector<Type>
+template<typename Type> requires std::copy_constructible<Type>
+class kF::Core::FlatStringBase : public kF::Core::FlatVector<Type>
 {
 public:
     using FlatVector<Type>::FlatVector;
@@ -37,55 +41,55 @@ public:
     using FlatVector<Type>::insert;
 
     /** @brief Default constructor */
-    FlatString(void) noexcept = default;
+    FlatStringBase(void) noexcept = default;
 
     /** @brief Copy constructor */
-    FlatString(const FlatString &other) noexcept = default;
+    FlatStringBase(const FlatStringBase &other) noexcept = default;
 
     /** @brief Move constructor */
-    FlatString(FlatString &&other) noexcept = default;
+    FlatStringBase(FlatStringBase &&other) noexcept = default;
 
     /** @brief CString constructor */
-    explicit FlatString(const char * const cstring) noexcept { resize(cstring, cstring + SafeStrlen(cstring)); }
+    explicit FlatStringBase(const char * const cstring) noexcept { resize(cstring, cstring + SafeStrlen(cstring)); }
 
     /** @brief CString array constructor */
     template<std::size_t Size>
-    explicit FlatString(const char cstring[Size]) noexcept { resize(&cstring[0], &cstring[Size]); }
+    explicit FlatStringBase(const char cstring[Size]) noexcept { resize(&cstring[0], &cstring[Size]); }
 
     /** @brief CString length constructor */
-    explicit FlatString(const char * const cstring, const std::size_t length) noexcept { resize(cstring, cstring + length); }
+    explicit FlatStringBase(const char * const cstring, const std::size_t length) noexcept { resize(cstring, cstring + length); }
 
     /** @brief std::string constructor */
-    explicit FlatString(const std::basic_string<Type> &other) noexcept { resize(other.begin(), other.end()); }
+    explicit FlatStringBase(const std::basic_string<Type> &other) noexcept { resize(other.begin(), other.end()); }
 
     /** @brief std::string_view constructor */
-    explicit FlatString(const std::basic_string_view<Type> &other) noexcept { resize(other.begin(), other.end()); }
+    explicit FlatStringBase(const std::basic_string_view<Type> &other) noexcept { resize(other.begin(), other.end()); }
 
     /** @brief Destructor */
-    ~FlatString(void) noexcept = default;
+    ~FlatStringBase(void) noexcept = default;
 
     /** @brief Copy assignment */
-    FlatString &operator=(const FlatString &other) noexcept = default;
+    FlatStringBase &operator=(const FlatStringBase &other) noexcept = default;
 
     /** @brief Move assignment */
-    FlatString &operator=(FlatString &&other) noexcept = default;
+    FlatStringBase &operator=(FlatStringBase &&other) noexcept = default;
 
     /** @brief cstring assignment */
-    FlatString &operator=(const char * const cstring) noexcept { resize(cstring, cstring + SafeStrlen(cstring)); return *this; }
+    FlatStringBase &operator=(const char * const cstring) noexcept { resize(cstring, cstring + SafeStrlen(cstring)); return *this; }
 
     /** @brief cstring array assignment */
     template<std::size_t Size>
-    FlatString &operator=(const char cstring[Size]) noexcept { resize(cstring, cstring + Size); return *this; }
+    FlatStringBase &operator=(const char cstring[Size]) noexcept { resize(cstring, cstring + Size); return *this; }
 
     /** @brief std::string assignment */
-    FlatString &operator=(const std::basic_string<Type> &other) noexcept { resize(other.begin(), other.end()); return *this; }
+    FlatStringBase &operator=(const std::basic_string<Type> &other) noexcept { resize(other.begin(), other.end()); return *this; }
 
     /** @brief std::string_view assignment */
-    FlatString &operator=(const std::basic_string_view<Type> &other) noexcept { resize(other.begin(), other.end()); return *this; }
+    FlatStringBase &operator=(const std::basic_string_view<Type> &other) noexcept { resize(other.begin(), other.end()); return *this; }
 
     /** @brief Comparison operator */
-    [[nodiscard]] bool operator==(const FlatString &other) const noexcept { return std::equal(begin(), end(), other.begin(), other.end()); }
-    [[nodiscard]] bool operator!=(const FlatString &other) const noexcept { return !operator==(other); }
+    [[nodiscard]] bool operator==(const FlatStringBase &other) const noexcept { return std::equal(begin(), end(), other.begin(), other.end()); }
+    [[nodiscard]] bool operator!=(const FlatStringBase &other) const noexcept { return !operator==(other); }
 
     /** @brief cstring comparison operator */
     [[nodiscard]] bool operator==(const char * const cstring) const noexcept { return std::equal(begin(), end(), cstring, cstring + SafeStrlen(cstring)); }
@@ -106,10 +110,10 @@ public:
     [[nodiscard]] bool operator!=(const std::basic_string_view<Type> &other) const noexcept { return !operator==(other); }
 
     /** @brief Get a std::string from the object */
-    [[nodiscard]] std::basic_string<Type> getStdView(void) const noexcept { return std::basic_string<Type>(data(), size()); }
+    [[nodiscard]] std::basic_string<Type> toStdView(void) const noexcept { return std::basic_string<Type>(data(), size()); }
 
     /** @brief Get a std::string_view of the object */
-    [[nodiscard]] std::basic_string_view<Type> getStdString(void) const noexcept { return std::basic_string_view<Type>(data(), size()); }
+    [[nodiscard]] std::basic_string_view<Type> toStdString(void) const noexcept { return std::basic_string_view<Type>(data(), size()); }
 
 private:
     [[nodiscard]] static std::size_t SafeStrlen(const char * const cstring) noexcept
