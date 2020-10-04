@@ -51,6 +51,9 @@ public:
     /** @brief Destruct and release all memory (unsafe) */
     ~MPMCQueue(void) noexcept_destructible(Type);
 
+    /** @brief Return the size of the queue */
+    [[nodiscard]] std::size_t size(void) const noexcept;
+
     /** @brief Push a single element into the queue
      *  @return true if the element has been inserted */
     template<bool MoveOnSuccess = false, typename ...Args>

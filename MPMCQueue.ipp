@@ -16,7 +16,7 @@ kF::Core::MPMCQueue<Type>::MPMCQueue(const std::size_t capacity)
     else if (_tailCache.buffer.data = reinterpret_cast<Cell *>(std::malloc(sizeof(Cell) * capacity)); !_tailCache.buffer.data)
         throw std::runtime_error("Core::MPMCQueue: Malloc failed");
     for (auto i = 0ul; i < capacity; ++i)
-        _tailCache.buffer.data[i].sequence.store(i);
+        new (&_tailCache.buffer.data[i].sequence) decltype(Cell::sequence)(i);
     _headCache = _tailCache;
 }
 
@@ -25,6 +25,12 @@ kF::Core::MPMCQueue<Type>::~MPMCQueue(void) noexcept_destructible(Type)
 {
     clear();
     std::free(_tailCache.buffer.data);
+}
+
+template<typename Type>
+inline std::size_t kF::Core::MPMCQueue<Type>::size(void) const noexcept
+{
+    return _tail.load(std::memory_order_relaxed) - _head.load(std::memory_order_relaxed);
 }
 
 template<typename Type>
