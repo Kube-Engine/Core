@@ -6,9 +6,7 @@ set(KubeCoreBenchmarksSources
     ${KubeCoreBenchmarksDir}/Main.cpp
     ${KubeCoreBenchmarksDir}/bench_SafeQueue.cpp
     ${KubeCoreBenchmarksDir}/bench_SPSCQueue.cpp
-    ${KubeCoreBenchmarksDir}/bench_ExternalSPSCQueue.cpp
     ${KubeCoreBenchmarksDir}/bench_MPMCQueue.cpp
-    ${KubeCoreBenchmarksDir}/bench_ExternalMPMCQueue.cpp
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${KubeCoreBenchmarksSources})
