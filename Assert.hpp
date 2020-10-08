@@ -9,14 +9,16 @@
 
 # define KUBE_DEBUG_BUILD false
 
-#define kFAssert(expression, onError) static_cast<void>(0)
+// Do nothing
+# define kFAssert(expression, onError) static_cast<void>(0)
+# define kFAssertFallback(expression, onFallback, onError) static_cast<void>(0)
 
 #else // Debug mode
 
 # define KUBE_DEBUG_BUILD true
 
 # define kFAssert(expression, onError) if (!(expression)) onError
-
+# define kFAssertFallback(expression, onFallback, onError) if (!(expression)) { onFallback; onError; }
 #endif
 
 /** @brief Exception helper */

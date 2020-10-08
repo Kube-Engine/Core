@@ -11,7 +11,7 @@
 
 namespace kF::Core
 {
-    template<typename Type> requires std::copy_constructible<Type> || std::move_constructible<Type>
+    template<typename Type>
     class FlatVector;
 }
 
@@ -20,7 +20,7 @@ namespace kF::Core
  * Because the size and capacity are stored on the heap if you wish to get the vector size and not lookup after that
  * it is slower due to memory indirection
 */
-template<typename Type> requires std::copy_constructible<Type> || std::move_constructible<Type>
+template<typename Type>
 class kF::Core::FlatVector
 {
 public:

@@ -15,7 +15,7 @@
 
 namespace kF::Core
 {
-    template<typename Type> requires std::copy_constructible<Type>
+    template<typename Type>
     class FlatStringBase;
 
     using FlatString = FlatStringBase<char>;
@@ -28,7 +28,7 @@ namespace kF::Core
  * it is slower due to memory indirection
  * Because the string don't have small optimization, it will perform worse than an std::string with short strings
 */
-template<typename Type> requires std::copy_constructible<Type>
+template<typename Type>
 class kF::Core::FlatStringBase : public kF::Core::FlatVector<Type>
 {
 public:
@@ -39,6 +39,8 @@ public:
     using FlatVector<Type>::end;
     using FlatVector<Type>::resize;
     using FlatVector<Type>::insert;
+    using FlatVector<Type>::empty;
+    using FlatVector<Type>::operator bool;
 
     /** @brief Default constructor */
     FlatStringBase(void) noexcept = default;
