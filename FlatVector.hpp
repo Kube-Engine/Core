@@ -117,7 +117,7 @@ public:
 
     /** @brief Push an element into the vector */
     template<typename ...Args>
-    void push(Args &&...args)
+    Type &push(Args &&...args)
         noexcept(nothrow_constructible(Type, Args...) && nothrow_destructible(Type))
         requires std::constructible_from<Type, Args...>;
 

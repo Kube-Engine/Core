@@ -83,7 +83,7 @@ inline std::size_t kF::Core::FlatVector<Type>::capacity(void) const noexcept
 
 template<typename Type>
 template<typename ...Args>
-inline void kF::Core::FlatVector<Type>::push(Args &&...args)
+inline Type &kF::Core::FlatVector<Type>::push(Args &&...args)
     noexcept(nothrow_constructible(Type, Args...) && nothrow_destructible(Type))
     requires std::constructible_from<Type, Args...>
 {
@@ -91,8 +91,10 @@ inline void kF::Core::FlatVector<Type>::push(Args &&...args)
         reserve(2);
     else if (_ptr->size == _ptr->capacity) [[unlikely]]
         grow();
-    new (&at(_ptr->size)) Type(std::forward<Args>(args)...);
+    Type *data = &at(_ptr->size);
     ++_ptr->size;
+    new (data) Type(std::forward<Args>(args)...);
+    return *data;
 }
 
 template<typename Type>

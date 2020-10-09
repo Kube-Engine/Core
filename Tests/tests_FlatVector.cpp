@@ -129,6 +129,6 @@ TEST(FlatVector, InsertFill)
     vector.insert(vector.end(), 1, 32);
     ASSERT_EQ(vector.back(), 32);
     vector.insert(vector.end(), 42, 32);
-    for (auto i = 4; i < vector.size<false>(); ++i)
+    for (auto i = 4u; i < vector.size<false>(); ++i)
         ASSERT_EQ(vector[i], 32);
 }

@@ -20,11 +20,11 @@ TEST(MPMCQueue, SinglePushPop)
 
     Core::MPMCQueue<std::string> queue(queueSize);
 
-    for (auto i = 0; i < queueSize; ++i)
+    for (auto i = 0u; i < queueSize; ++i)
         ASSERT_TRUE(queue.push(LongStr));
-    for (auto i = 0; i < queueSize; ++i)
+    for (auto i = 0u; i < queueSize; ++i)
         ASSERT_FALSE(queue.push(ShortStr));
-    for (auto i = 0; i < queueSize; ++i) {
+    for (auto i = 0u; i < queueSize; ++i) {
         std::string str;
         ASSERT_TRUE(queue.pop(str));
         ASSERT_EQ(str, LongStr);
