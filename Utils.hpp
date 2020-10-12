@@ -43,6 +43,12 @@
 /** @brief Compile-time ternary expression */
 #define ConstexprTernary(condition, body, elseBody) [] { if constexpr (condition) { return body; } else { return elseBody; } }()
 
+/** @brief Compile-time ternary expression with runtime reference capture */
+#define ConstexprTernaryRef(condition, body, elseBody) [&] { if constexpr (condition) { return body; } else { return elseBody; } }()
+
+/** @brief Compile-time ternary expression with runtime copy capture */
+#define ConstexprTernaryCopy(condition, body, elseBody) [=] { if constexpr (condition) { return body; } else { return elseBody; } }()
+
 namespace kF::Core::Utils
 {
     /** @brief Theorical cacheline size */
