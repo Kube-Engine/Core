@@ -32,6 +32,18 @@ TEST(FlatVector, Push)
         ++i;
     }
     ASSERT_EQ(i, count);
+    vector.clear();
+    ASSERT_FALSE(vector);
+    for (auto i = 0ul; i < count; ++i)
+        vector.push(i);
+    ASSERT_TRUE(vector);
+    ASSERT_EQ(vector.size(), count);
+    i = 0ul;
+    for (const auto elem : vector) {
+        ASSERT_EQ(elem, i);
+        ++i;
+    }
+    ASSERT_EQ(i, count);
 }
 
 TEST(FlatVector, Pop)
@@ -131,4 +143,22 @@ TEST(FlatVector, InsertFill)
     vector.insert(vector.end(), 42, 32);
     for (auto i = 4u; i < vector.size<false>(); ++i)
         ASSERT_EQ(vector[i], 32);
+}
+
+TEST(FlatVector, Clear)
+{
+    constexpr auto count = 42;
+    constexpr auto value1 = 24;
+    constexpr auto value2 = 42;
+    Core::FlatVector<int> vector(count, value1);
+    auto *data = vector.data();
+    for (auto i = 0u; i < count; ++i)
+        ASSERT_EQ(data[i], value1);
+    vector.clear();
+    vector.insert(vector.begin(), count, value2);
+    for (auto i = 0u; i < count; ++i)
+            ASSERT_EQ(data[i], value2);
+    vector.clear();
+    vector.insert(vector.begin(), count * 2, value1);
+    ASSERT_NE(vector.data(), data);
 }

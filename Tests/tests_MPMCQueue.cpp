@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include <Kube/Core/Assert.hpp>
 #include <Kube/Core/MPMCQueue.hpp>
 
 using namespace kF;
@@ -34,7 +35,7 @@ TEST(MPMCQueue, SinglePushPop)
 TEST(MPMCQueue, InstensiveThreading)
 {
     constexpr auto ThreadCount = 4;
-    constexpr auto Counter = 10000;
+    constexpr auto Counter = KUBE_DEBUG_BUILD ? 100 : 10000;
     constexpr std::size_t queueSize = 4096;
 
     static std::atomic<bool> running { true };
