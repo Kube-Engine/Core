@@ -61,6 +61,10 @@ public:
         requires std::copy_constructible<Type>
         { resize(count, value); }
 
+    /** @brief Initializer list constructor */
+    FlatVector(std::initializer_list<Type> init) noexcept_forward_constructible(Type)
+        : FlatVector(init.begin(), init.end()) {}
+
     /** @brief Destroy constructor */
     ~FlatVector(void) noexcept_destructible(Type) { release(); }
 
