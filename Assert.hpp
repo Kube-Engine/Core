@@ -25,4 +25,4 @@
 #define nothrow_ndebug !KUBE_DEBUG_BUILD
 
 /** @brief Helper to make a function noexcept only in release */
-#define noexcept_ndebug noexcept(!KUBE_DEBUG_BUILD)
+#define noexcept_ndebug noexcept(nothrow_ndebug)
