@@ -105,6 +105,15 @@ inline void kF::Core::FlatVector<Type>::pop(void) noexcept_destructible(Type)
 }
 
 template<typename Type>
+inline void kF::Core::FlatVector<Type>::erase(const Iterator from, const Iterator to)
+    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+{
+    std::destroy(from, to);
+    std::move(to + 1, end<false>(), from);
+    _ptr->size -= std::distance(from, to);
+}
+
+template<typename Type>
 inline void kF::Core::FlatVector<Type>::resize(const std::size_t count)
     noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
     requires std::constructible_from<Type>

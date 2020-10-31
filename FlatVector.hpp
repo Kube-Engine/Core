@@ -114,10 +114,10 @@ public:
     [[nodiscard]] ConstIterator cend(void) const noexcept { return end<SafeCheck>(); }
 
     /** @brief Front / Back getters */
-    Type &front(void) noexcept { return at(0); }
-    const Type &front(void) const noexcept { return at(0); }
-    Type &back(void) noexcept { return at(size<false>() - 1); }
-    const Type &back(void) const noexcept { return at(size<false>() - 1); }
+    [[nodiscard]] Type &front(void) noexcept { return at(0); }
+    [[nodiscard]] const Type &front(void) const noexcept { return at(0); }
+    [[nodiscard]] Type &back(void) noexcept { return at(size<false>() - 1); }
+    [[nodiscard]] const Type &back(void) const noexcept { return at(size<false>() - 1); }
 
     /** @brief Push an element into the vector */
     template<typename ...Args>
@@ -142,6 +142,20 @@ public:
     Iterator insert(const Iterator at, const std::size_t count, const Type &value)
         noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
         requires std::copy_constructible<Type>;
+
+    /** @brief Remove a range of elements */
+    void erase(const Iterator from, const Iterator to)
+        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
+
+    /** @brief Remove a range of elements */
+    void erase(const Iterator from, const std::size_t count)
+        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+        { erase(from, from + count); }
+
+    /** @brief Remove a specific element */
+    void erase(const Iterator it)
+        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+        { erase(it, it + 1); }
 
     /** @brief Resize the vector using default constructor to initialize each element */
     void resize(const std::size_t count)

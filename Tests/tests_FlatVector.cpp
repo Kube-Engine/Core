@@ -162,3 +162,32 @@ TEST(FlatVector, Clear)
     vector.insert(vector.begin(), count * 2, value1);
     ASSERT_NE(vector.data(), data);
 }
+
+TEST(FlatVector, Erase)
+{
+    constexpr auto count = 10;
+
+    constexpr auto Get = [] {
+        Core::FlatVector<int> vector(count);
+        for (auto i = 0; i < count; ++i)
+            vector[i] = i;
+    };
+
+    {
+        auto vector = Get();
+        vector.erase(vector.begin(), vector.end());
+        ASSERT_EQ(vector.size(), 0);
+    }
+    {
+        auto vector = Get();
+        vector.erase(vector.end() - count / 2, vector.end());
+        ASSERT_EQ(vector.size(), count / 2);
+        for (auto i = 0; auto elem : vector)
+            ASSERT_EQ(elem == i++);
+        vector.erase(vector.begin(), vector.size() - 1);
+        ASSERT_EQ(vector.size(), 1);
+        ASSERT_EQ(vector.front(), count / 2 - 1);
+        vector.erase(vector.begin());
+        ASSERT_EQ(vector.size(), 0);
+    }
+}
