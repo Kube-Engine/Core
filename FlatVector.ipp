@@ -4,87 +4,45 @@
  */
 
 template<typename Type>
-template<bool SafeCheck>
-inline kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::begin(void) noexcept
-{
-    if constexpr (SafeCheck) {
-        if (_ptr) [[likely]]
-            return data();
-        else [[unlikely]]
-            return nullptr;
-    } else
-        return data();
-}
-
-template<typename Type>
-template<bool SafeCheck>
-inline kF::Core::FlatVector<Type>::ConstIterator kF::Core::FlatVector<Type>::begin(void) const noexcept
-{
-    if constexpr (SafeCheck) {
-        if (_ptr) [[likely]]
-            return data();
-        else [[unlikely]]
-            return nullptr;
-    } else
-        return data();
-}
-
-template<typename Type>
-template<bool SafeCheck>
-inline kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::end(void) noexcept
-{
-    if constexpr (SafeCheck) {
-        if (_ptr) [[likely]]
-            return data() + _ptr->size;
-        else [[unlikely]]
-            return nullptr;
-    } else
-        return data() + _ptr->size;
-}
-
-template<typename Type>
-template<bool SafeCheck>
-inline kF::Core::FlatVector<Type>::ConstIterator kF::Core::FlatVector<Type>::end(void) const noexcept
-{
-    if constexpr (SafeCheck) {
-        if (_ptr) [[likely]]
-            return data() + _ptr->size;
-        else [[unlikely]]
-            return nullptr;
-    } else
-        return data() + _ptr->size;
-}
-
-template<typename Type>
-template<bool SafeCheck>
 inline std::size_t kF::Core::FlatVector<Type>::size(void) const noexcept
 {
-    if constexpr (SafeCheck) {
-        if (_ptr) [[likely]]
-            return _ptr->size;
-        else [[unlikely]]
-            return 0;
-    } else
+    if (_ptr) [[likely]]
         return _ptr->size;
+    else [[unlikely]]
+        return 0;
 }
 
 template<typename Type>
-template<bool SafeCheck>
 inline std::size_t kF::Core::FlatVector<Type>::capacity(void) const noexcept
 {
-    if constexpr (SafeCheck) {
-        if (_ptr) [[likely]]
-            return _ptr->capacity;
-        else [[unlikely]]
-            return 0;
-    } else
+    if (_ptr) [[likely]]
         return _ptr->capacity;
+    else [[unlikely]]
+        return 0;
+}
+
+template<typename Type>
+inline typename kF::Core::FlatVector<Type>::ConstIterator kF::Core::FlatVector<Type>::begin(void) const noexcept
+{
+    if (_ptr) [[likely]]
+        return data();
+    else [[unlikely]]
+        return nullptr;
+}
+
+template<typename Type>
+inline typename kF::Core::FlatVector<Type>::ConstIterator kF::Core::FlatVector<Type>::end(void) const noexcept
+{
+    if (_ptr) [[likely]]
+        return data() + _ptr->size;
+    else [[unlikely]]
+        return nullptr;
 }
 
 template<typename Type>
 template<typename ...Args>
 inline Type &kF::Core::FlatVector<Type>::push(Args &&...args)
-    noexcept(nothrow_constructible(Type, Args...) && nothrow_destructible(Type))
+    noexcept(std::is_nothrow_constructible_v<Type, Args...> && nothrow_destructible(Type))
     requires std::constructible_from<Type, Args...>
 {
     if (!_ptr) [[unlikely]]
@@ -109,13 +67,13 @@ inline void kF::Core::FlatVector<Type>::erase(const Iterator from, const Iterato
     noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     std::destroy(from, to);
-    std::move(to + 1, end<false>(), from);
+    std::move(to + 1, endUnsafe(), from);
     _ptr->size -= std::distance(from, to);
 }
 
 template<typename Type>
 inline void kF::Core::FlatVector<Type>::resize(const std::size_t count)
-    noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
+    noexcept(std::is_nothrow_constructible_v<Type> && nothrow_destructible(Type))
     requires std::constructible_from<Type>
 {
     if (!count) [[unlikely]] {
@@ -163,8 +121,9 @@ inline void kF::Core::FlatVector<Type>::resize(const InputIterator from, const I
 
 template<typename Type>
 template<std::input_iterator InputIterator>
-kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator at, const InputIterator from, const InputIterator to)
+inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator at, const InputIterator from, const InputIterator to)
     noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+    requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
 {
     const std::size_t count = std::distance(from, to);
     std::size_t position;
@@ -175,8 +134,8 @@ kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const It
         reserve(count);
         position = 0;
     } else [[likely]]
-        position = at - begin<false>();
-    if (const auto currentSize = size<false>(), total = currentSize + count; total > capacity<false>()) [[unlikely]] {
+        position = at - beginUnsafe();
+    if (const auto currentSize = sizeUnsafe(), total = currentSize + count; total > capacityUnsafe()) [[unlikely]] {
         const auto tmpSize = currentSize + std::max(currentSize, count);
         const auto tmpPtr = reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * tmpSize));
         const auto tmpData = reinterpret_cast<Type *>(tmpPtr + 1);
@@ -189,9 +148,9 @@ kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const It
         _ptr = tmpPtr;
         return tmpData + position;
     }
-    const auto tmpBegin = begin<false>();
-    const auto tmpEnd = end<false>();
-    if (const auto after = size<false>() - position; after > count) {
+    const auto tmpBegin = beginUnsafe();
+    const auto tmpEnd = endUnsafe();
+    if (const auto after = sizeUnsafe() - position; after > count) {
         std::uninitialized_move(tmpEnd - count, tmpEnd, tmpEnd);
         std::copy(from, to, tmpBegin + position);
     } else {
@@ -206,7 +165,7 @@ kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const It
 }
 
 template<typename Type>
-kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator at, const std::size_t count, const Type &value)
+inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator at, const std::size_t count, const Type &value)
     noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
     requires std::copy_constructible<Type>
 {
@@ -216,11 +175,11 @@ kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const It
         resize(count, value);
         return begin();
     }
-    std::size_t position = at - begin<false>();
-    const auto currentBegin = begin<false>();
-    const auto currentEnd = end<false>();
-    const auto currentSize = size<false>();
-    if (auto total = currentSize + count; total > capacity<false>()) [[unlikely]] {
+    std::size_t position = at - beginUnsafe();
+    const auto currentBegin = beginUnsafe();
+    const auto currentEnd = endUnsafe();
+    const auto currentSize = sizeUnsafe();
+    if (auto total = currentSize + count; total > capacityUnsafe()) [[unlikely]] {
         const auto tmpSize = currentSize + std::max(currentSize, count);
         const auto tmpPtr = reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * tmpSize));
         const auto tmpData = reinterpret_cast<Type *>(tmpPtr + 1);
@@ -232,7 +191,7 @@ kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const It
         std::free(_ptr);
         _ptr = tmpPtr;
         return tmpData + position;
-    } else if (const auto after = size<false>() - position; after > count) {
+    } else if (const auto after = sizeUnsafe() - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
         std::fill_n(currentBegin + position, count, value);
     } else {
@@ -249,7 +208,7 @@ template<typename Type>
 inline void kF::Core::FlatVector<Type>::reserve(const std::size_t count) noexcept_destructible(Type)
 {
     if (_ptr) { [[unlikely]]
-        if (size<false>() != count) [[likely]]
+        if (sizeUnsafe() != count) [[likely]]
             release<false>();
         else [[unlikely]] {
             clear<false>();
@@ -270,7 +229,7 @@ inline void kF::Core::FlatVector<Type>::clear(void) noexcept_destructible(Type)
         if (!_ptr) [[unlikely]]
             return;
     }
-    std::destroy_n(begin<false>(), size<false>());
+    std::destroy_n(beginUnsafe(), sizeUnsafe());
     _ptr->size = 0;
 }
 

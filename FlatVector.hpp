@@ -82,8 +82,12 @@ public:
     [[nodiscard]] const Type *data(void) const noexcept { return reinterpret_cast<const Type *>(_ptr + 1); }
 
     /** @brief Access an element of the vector */
-    [[nodiscard]] Type &at(const std::size_t index) noexcept { return data()[index]; }
-    [[nodiscard]] const Type &at(const std::size_t index) const noexcept { return data()[index]; }
+    template<bool SafeCheck = true>
+    [[nodiscard]] Type &at(const std::size_t index) noexcept { return data<SafeCheck>()[index]; }
+    template<bool SafeCheck = true>
+    [[nodiscard]] const Type &at(const std::size_t index) const noexcept { return data<SafeCheck>()[index]; }
+
+    /** @brief Access operator */
     [[nodiscard]] Type &operator[](const std::size_t index) noexcept { return at(index); }
     [[nodiscard]] const Type &operator[](const std::size_t index) const noexcept { return at(index); }
 
@@ -92,37 +96,35 @@ public:
     operator bool(void) const noexcept { return !empty(); }
 
     /** @brief Get size of vector */
-    template<bool SafeCheck = true>
     [[nodiscard]] std::size_t size(void) const noexcept;
+    [[nodiscard]] std::size_t sizeUnsafe(void) const noexcept { return _ptr->size; }
 
     /** @brief Get capacity of vector */
-    template<bool SafeCheck = true>
     [[nodiscard]] std::size_t capacity(void) const noexcept;
+    [[nodiscard]] std::size_t capacityUnsafe(void) const noexcept { return _ptr->capacity; }
 
     /** @brief Begin / end iterators */
-    template<bool SafeCheck = true>
-    [[nodiscard]] Iterator begin(void) noexcept;
-    template<bool SafeCheck = true>
+    [[nodiscard]] Iterator begin(void) noexcept { return const_cast<Iterator>(const_cast<const FlatVector<Type> &>(*this).begin()); }
     [[nodiscard]] ConstIterator begin(void) const noexcept;
-    template<bool SafeCheck = true>
-    [[nodiscard]] ConstIterator cbegin(void) const noexcept { return begin<SafeCheck>(); }
-    template<bool SafeCheck = true>
-    [[nodiscard]] Iterator end(void) noexcept;
-    template<bool SafeCheck = true>
+    [[nodiscard]] ConstIterator cbegin(void) const noexcept { return begin(); }
+    [[nodiscard]] Iterator end(void) noexcept { return const_cast<Iterator>(const_cast<const FlatVector<Type> &>(*this).end()); }
     [[nodiscard]] ConstIterator end(void) const noexcept;
-    template<bool SafeCheck = true>
-    [[nodiscard]] ConstIterator cend(void) const noexcept { return end<SafeCheck>(); }
+    [[nodiscard]] ConstIterator cend(void) const noexcept { return end(); }
+    [[nodiscard]] Iterator beginUnsafe(void) noexcept { return data(); }
+    [[nodiscard]] ConstIterator beginUnsafe(void) const noexcept { return data(); }
+    [[nodiscard]] Iterator endUnsafe(void) noexcept { return data() + sizeUnsafe(); }
+    [[nodiscard]] ConstIterator endUnsafe(void) const noexcept { return data() + sizeUnsafe(); }
 
     /** @brief Front / Back getters */
     [[nodiscard]] Type &front(void) noexcept { return at(0); }
     [[nodiscard]] const Type &front(void) const noexcept { return at(0); }
-    [[nodiscard]] Type &back(void) noexcept { return at(size<false>() - 1); }
-    [[nodiscard]] const Type &back(void) const noexcept { return at(size<false>() - 1); }
+    [[nodiscard]] Type &back(void) noexcept { return at(sizeUnsafe() - 1); }
+    [[nodiscard]] const Type &back(void) const noexcept { return at(sizeUnsafe() - 1); }
 
     /** @brief Push an element into the vector */
     template<typename ...Args>
     Type &push(Args &&...args)
-        noexcept(nothrow_constructible(Type, Args...) && nothrow_destructible(Type))
+        noexcept(std::is_nothrow_constructible_v<Type, Args...> && nothrow_destructible(Type))
         requires std::constructible_from<Type, Args...>;
 
     /** @brief Push the last element of the vector */
@@ -136,7 +138,8 @@ public:
     /** @brief Insert a range of element by iterating over iterators */
     template<std::input_iterator InputIterator>
     Iterator insert(const Iterator at, const InputIterator from, const InputIterator to)
-        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
+        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+        requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>;
 
     /** @brief Insert a range of copies */
     Iterator insert(const Iterator at, const std::size_t count, const Type &value)
@@ -159,7 +162,7 @@ public:
 
     /** @brief Resize the vector using default constructor to initialize each element */
     void resize(const std::size_t count)
-        noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
+        noexcept(std::is_nothrow_constructible_v<Type> && nothrow_destructible(Type))
         requires std::constructible_from<Type>;
 
     /** @brief Resize the vector by copying given element */
@@ -193,5 +196,5 @@ private:
 #include "FlatVector.ipp"
 
 static_assert(sizeof(kF::Core::FlatVector<int>::Header) == 16);
-static_assert(sizeof(kF::Core::FlatVector<std::array<char, 16>>::Header) == 16);
-static_assert(sizeof(kF::Core::FlatVector<std::array<char, 17>>::Header) == 64);
+static_assert(sizeof(kF::Core::FlatVector<char[16]>::Header) == 16);
+static_assert(sizeof(kF::Core::FlatVector<char[17]>::Header) == 64);

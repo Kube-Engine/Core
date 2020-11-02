@@ -151,8 +151,8 @@ kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(
         reserve(count);
         position = 0;
     } else
-        position = at - begin<false>();
-    if (const auto currentSize = size<false>(), total = currentSize + count; total > capacity<false>()) [[unlikely]] {
+        position = at - beginUnsafe();
+    if (const auto currentSize = sizeUnsafe(), total = currentSize + count; total > capacityUnsafe()) [[unlikely]] {
         const auto tmpSize = currentSize + std::max(currentSize, count);
         const auto tmpPtr = reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * tmpSize));
         const auto tmpData = reinterpret_cast<Type *>(tmpPtr + 1);
@@ -165,9 +165,9 @@ kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(
         _ptr = tmpPtr;
         return tmpData + position;
     }
-    const auto tmpBegin = begin<false>();
-    const auto tmpEnd = end<false>();
-    if (const auto after = size<false>() - position; after > count) {
+    const auto tmpBegin = beginUnsafe();
+    const auto tmpEnd = endUnsafe();
+    if (const auto after = sizeUnsafe() - position; after > count) {
         std::uninitialized_move(tmpEnd - count, tmpEnd, tmpEnd);
         std::copy(from, to, tmpBegin + position);
     } else {
@@ -190,8 +190,8 @@ kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(
         resize(count, value);
         return begin();
     }
-    std::size_t position = at - begin<false>();
-    if (const auto currentSize = size<false>(), total = currentSize + count; total > capacity<false>()) [[unlikely]] {
+    std::size_t position = at - beginUnsafe();
+    if (const auto currentSize = sizeUnsafe(), total = currentSize + count; total > capacityUnsafe()) [[unlikely]] {
         const auto tmpSize = currentSize + std::max(currentSize, count);
         const auto tmpPtr = reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * tmpSize));
         const auto tmpData = reinterpret_cast<Type *>(tmpPtr + 1);
@@ -204,9 +204,9 @@ kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(
         _ptr = tmpPtr;
         return tmpData + position;
     }
-    const auto tmpBegin = begin<false>();
-    const auto tmpEnd = end<false>();
-    if (const auto after = size<false>() - position; after > count) {
+    const auto tmpBegin = beginUnsafe();
+    const auto tmpEnd = endUnsafe();
+    if (const auto after = sizeUnsafe() - position; after > count) {
         std::uninitialized_move(tmpEnd - count, tmpEnd, tmpEnd);
         std::fill_n(tmpBegin + position, count, value);
     } else {
@@ -223,7 +223,7 @@ template<typename Type>
 inline void kF::Core::FlatStringBase<Type>::reserve(const std::size_t count) noexcept_destructible(Type)
 {
     if (_ptr) { [[unlikely]]
-        if (size<false>() != count) [[likely]]
+        if (sizeUnsafe() != count) [[likely]]
             release<false>();
         else [[unlikely]] {
             clear<false>();
@@ -243,7 +243,7 @@ inline void kF::Core::FlatStringBase<Type>::clear(void) noexcept_destructible(Ty
         if (!_ptr) [[unlikely]]
             return;
     }
-    std::destroy_n(begin<false>(), size<false>());
+    std::destroy_n(beginUnsafe(), sizeUnsafe());
 }
 
 template<typename Type>

@@ -2,7 +2,6 @@
  * @ Author: Matthieu Moinvaziri
  * @ Description: Tests of the single consumer concurrent queue
  */
-
 #include <gtest/gtest.h>
 
 #include <Kube/Core/FlatVector.hpp>
@@ -141,7 +140,7 @@ TEST(FlatVector, InsertFill)
     vector.insert(vector.end(), 1, 32);
     ASSERT_EQ(vector.back(), 32);
     vector.insert(vector.end(), 42, 32);
-    for (auto i = 4u; i < vector.size<false>(); ++i)
+    for (auto i = 4u; i < vector.sizeUnsafe(); ++i)
         ASSERT_EQ(vector[i], 32);
 }
 
@@ -171,6 +170,7 @@ TEST(FlatVector, Erase)
         Core::FlatVector<int> vector(count);
         for (auto i = 0; i < count; ++i)
             vector[i] = i;
+        return vector;
     };
 
     {
@@ -182,8 +182,9 @@ TEST(FlatVector, Erase)
         auto vector = Get();
         vector.erase(vector.end() - count / 2, vector.end());
         ASSERT_EQ(vector.size(), count / 2);
-        for (auto i = 0; auto elem : vector)
-            ASSERT_EQ(elem == i++);
+        for (auto i = 0; auto elem : vector) {
+            ASSERT_EQ(elem, i++);
+        }
         vector.erase(vector.begin(), vector.size() - 1);
         ASSERT_EQ(vector.size(), 1);
         ASSERT_EQ(vector.front(), count / 2 - 1);

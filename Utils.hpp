@@ -19,7 +19,7 @@
 #define nothrow_forward_assignable(Type) (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_copy_assignable(Type))
 #define nothrow_destructible(Type) std::is_nothrow_destructible_v<Type>
 #define nothrow_invokable(Function, ...) std::is_nothrow_invokable_v<Function __VA_OPT__(,) __VA_ARGS__>
-#define nothrow_forward_iterator_constructible(Type) (std::__is_move_iterator<Type>::__value ? nothrow_move_constructible(Type) : nothrow_copy_constructible(Type))
+#define nothrow_forward_iterator_constructible(Type) (kF::Core::Utils::IsMoveIterator<Type>::Value ? nothrow_move_constructible(Type) : nothrow_copy_constructible(Type))
 #define nothrow_convertible(From, To) std::is_nothrow_convertible_v<From, To>
 #define nothrow_expr(Expression) noexcept(Expression)
 
@@ -54,6 +54,27 @@ namespace kF::Core::Utils
     /** @brief Theorical cacheline size */
     constexpr std::size_t CacheLineSize = 64ul;
 
-    /** @brief A dummy structure of null size */
-    struct Dummy {};
+    template<typename Type>
+    struct IsMoveIterator;
+
+    template<typename Type>
+    struct IsMoveIterator
+    {
+        static constexpr bool Value = false;
+    };
+
+    template<typename Iterator>
+    struct IsMoveIterator<std::move_iterator<Iterator>> : public IsMoveIterator<Iterator>
+    {
+        static constexpr bool Value = true;
+    };
+
+    template<typename Iterator>
+    struct IsMoveIterator<std::reverse_iterator<Iterator>> : public IsMoveIterator<Iterator>
+    {};
+
+    static_assert(IsMoveIterator<std::move_iterator<void *>>::Value, "IsMoveIterator not working");
+    static_assert(IsMoveIterator<std::reverse_iterator<std::move_iterator<void *>>>::Value, "IsMoveIterator not working");
+    static_assert(!IsMoveIterator<std::reverse_iterator<void *>>::Value, "IsMoveIterator not working");
+    static_assert(!IsMoveIterator<void *>::Value, "IsMoveIterator not working");
 }

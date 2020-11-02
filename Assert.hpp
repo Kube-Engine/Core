@@ -12,6 +12,7 @@
 // Do nothing
 # define kFAssert(expression, onError) static_cast<void>(0)
 # define kFAssertFallback(expression, onFallback, onError) static_cast<void>(0)
+# define kFDebugThrow(exception) std::terminate();
 
 #else // Debug mode
 
@@ -19,6 +20,7 @@
 
 # define kFAssert(expression, onError) if (!(expression)) onError
 # define kFAssertFallback(expression, onFallback, onError) if (!(expression)) { onFallback; onError; }
+# define kFDebugThrow(exception) throw exception;
 #endif
 
 /** @brief Exception helper */
