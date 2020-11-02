@@ -67,7 +67,11 @@ inline void kF::Core::FlatVector<Type>::erase(const Iterator from, const Iterato
     noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     std::destroy(from, to);
-    std::move(to + 1, endUnsafe(), from);
+    // auto target = to + 1;
+    // for (auto it = from; it != to) {
+
+    // }
+    std::copy(std::make_move_iterator(to + 1), std::make_move_iterator(endUnsafe()), from);
     _ptr->size -= std::distance(from, to);
 }
 

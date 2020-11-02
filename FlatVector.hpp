@@ -82,10 +82,8 @@ public:
     [[nodiscard]] const Type *data(void) const noexcept { return reinterpret_cast<const Type *>(_ptr + 1); }
 
     /** @brief Access an element of the vector */
-    template<bool SafeCheck = true>
-    [[nodiscard]] Type &at(const std::size_t index) noexcept { return data<SafeCheck>()[index]; }
-    template<bool SafeCheck = true>
-    [[nodiscard]] const Type &at(const std::size_t index) const noexcept { return data<SafeCheck>()[index]; }
+    [[nodiscard]] Type &at(const std::size_t index) noexcept { return data()[index]; }
+    [[nodiscard]] const Type &at(const std::size_t index) const noexcept { return data()[index]; }
 
     /** @brief Access operator */
     [[nodiscard]] Type &operator[](const std::size_t index) noexcept { return at(index); }
