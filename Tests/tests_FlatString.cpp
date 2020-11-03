@@ -9,14 +9,14 @@
 
 using namespace kF;
 
+#include <iostream>
+
 TEST(FlatString, Basics)
 {
-    constexpr auto value = "hello world";
-    char array[std::strlen(value)];
-    std::memcpy(array, value, std::strlen(value));
+    constexpr const char *value = "hello world";
+    char array[] = { 'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' , '\0' };
 
-    auto assertStringValue = [value, &array](const auto &str) {
-        ASSERT_EQ(str, value);
+    auto assertStringValue = [value, &array](const Core::FlatString &str) {
         ASSERT_EQ(str, value);
         ASSERT_EQ(str, array);
         ASSERT_EQ(str, std::string(value));

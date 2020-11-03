@@ -80,7 +80,6 @@ inline void kF::Core::FlatVector<Type>::erase(const Iterator from, const Iterato
 template<typename Type>
 inline void kF::Core::FlatVector<Type>::resize(const std::size_t count)
     noexcept(std::is_nothrow_constructible_v<Type> && nothrow_destructible(Type))
-    requires std::constructible_from<Type>
 {
     if (!count) [[unlikely]] {
         clear();
@@ -96,7 +95,6 @@ inline void kF::Core::FlatVector<Type>::resize(const std::size_t count)
 template<typename Type>
 inline void kF::Core::FlatVector<Type>::resize(const std::size_t count, const Type &value)
     noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
-    requires std::copy_constructible<Type>
 {
     if (!count) [[unlikely]] {
         clear();
@@ -126,11 +124,9 @@ inline void kF::Core::FlatVector<Type>::resize(const InputIterator from, const I
 }
 
 template<typename Type>
-template<std::input_iterator InputIterator>
+template<std::input_iterator InputIterator> requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
 inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator pos, const InputIterator from, const InputIterator to)
-    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
-    requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
-{
+    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type)){
     const std::size_t count = std::distance(from, to);
     std::size_t position;
 
@@ -173,7 +169,6 @@ inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>:
 template<typename Type>
 inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator pos, const std::size_t count, const Type &value)
     noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
-    requires std::copy_constructible<Type>
 {
     if (!count) [[unlikely]]
         return end();

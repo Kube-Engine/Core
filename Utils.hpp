@@ -54,21 +54,25 @@ namespace kF::Core::Utils
     /** @brief Theorical cacheline size */
     constexpr std::size_t CacheLineSize = 64ul;
 
+    /** @brief Helper to know if a given type is a std::move_iterator */
     template<typename Type>
     struct IsMoveIterator;
 
+    /** @brief Helper that match non-move iterators */
     template<typename Type>
     struct IsMoveIterator
     {
         static constexpr bool Value = false;
     };
 
+    /** @brief Helper that match move iterators */
     template<typename Iterator>
     struct IsMoveIterator<std::move_iterator<Iterator>> : public IsMoveIterator<Iterator>
     {
         static constexpr bool Value = true;
     };
 
+    /** @brief Helper that match reverse iterators */
     template<typename Iterator>
     struct IsMoveIterator<std::reverse_iterator<Iterator>> : public IsMoveIterator<Iterator>
     {};

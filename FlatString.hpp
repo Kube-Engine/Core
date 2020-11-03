@@ -54,10 +54,6 @@ public:
     /** @brief CString constructor */
     explicit FlatStringBase(const char * const cstring) noexcept { resize(cstring, cstring + SafeStrlen(cstring)); }
 
-    /** @brief CString array constructor */
-    template<std::size_t Size>
-    explicit FlatStringBase(const char cstring[Size]) noexcept { resize(&cstring[0], &cstring[Size]); }
-
     /** @brief CString length constructor */
     explicit FlatStringBase(const char * const cstring, const std::size_t length) noexcept { resize(cstring, cstring + length); }
 
@@ -79,10 +75,6 @@ public:
     /** @brief cstring assignment */
     FlatStringBase &operator=(const char * const cstring) noexcept { resize(cstring, cstring + SafeStrlen(cstring)); return *this; }
 
-    /** @brief cstring array assignment */
-    template<std::size_t Size>
-    FlatStringBase &operator=(const char cstring[Size]) noexcept { resize(cstring, cstring + Size); return *this; }
-
     /** @brief std::string assignment */
     FlatStringBase &operator=(const std::basic_string<Type> &other) noexcept { resize(other.begin(), other.end()); return *this; }
 
@@ -96,12 +88,6 @@ public:
     /** @brief cstring comparison operator */
     [[nodiscard]] bool operator==(const char * const cstring) const noexcept { return std::equal(begin(), end(), cstring, cstring + SafeStrlen(cstring)); }
     [[nodiscard]] bool operator!=(const char * const cstring) const noexcept { return !operator==(cstring); }
-
-    /** @brief cstring array comparison operator */
-    template<std::size_t Size>
-    [[nodiscard]] bool operator==(const char cstring[Size]) const noexcept { return std::equal(begin(), end(), cstring, cstring + Size); }
-    template<std::size_t Size>
-    [[nodiscard]] bool operator!=(const char cstring[Size]) const noexcept { return !operator==(cstring); }
 
     /** @brief std::string comparison operator */
     [[nodiscard]] bool operator==(const std::basic_string<Type> &other) const noexcept { return std::equal(begin(), end(), other.begin(), other.end()); }

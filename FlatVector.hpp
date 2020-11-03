@@ -134,15 +134,13 @@ public:
         { return insert(pos, init.begin(), init.end()); }
 
     /** @brief Insert a range of element by iterating over iterators */
-    template<std::input_iterator InputIterator>
+    template<std::input_iterator InputIterator> requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
     Iterator insert(const Iterator pos, const InputIterator from, const InputIterator to)
-        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
-        requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>;
+        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
     /** @brief Insert a range of copies */
     Iterator insert(const Iterator pos, const std::size_t count, const Type &value)
-        noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
-        requires std::copy_constructible<Type>;
+        noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type));
 
     /** @brief Remove a range of elements */
     void erase(const Iterator from, const Iterator to)
@@ -160,13 +158,11 @@ public:
 
     /** @brief Resize the vector using default constructor to initialize each element */
     void resize(const std::size_t count)
-        noexcept(std::is_nothrow_constructible_v<Type> && nothrow_destructible(Type))
-        requires std::constructible_from<Type>;
+        noexcept(std::is_nothrow_constructible_v<Type> && nothrow_destructible(Type));
 
     /** @brief Resize the vector by copying given element */
     void resize(const std::size_t count, const Type &type)
-        noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
-        requires std::copy_constructible<Type>;
+        noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type));
 
     /** @brief Resize the vector with input iterators */
     template<std::input_iterator InputIterator>

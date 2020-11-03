@@ -3,8 +3,6 @@ project(KubeCoreTests)
 get_filename_component(KubeCoreTestsDir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 set(KubeCoreTestsSources
-   ${KubeCoreTestsDir}/tests_SafeQueue.cpp
-   ${KubeCoreTestsDir}/tests_SafeAccessTable.cpp
    ${KubeCoreTestsDir}/tests_SPSCQueue.cpp
    ${KubeCoreTestsDir}/tests_MPMCQueue.cpp
    ${KubeCoreTestsDir}/tests_HeapArray.cpp

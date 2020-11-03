@@ -12,7 +12,7 @@
 
 namespace kF::Core
 {
-    template<typename Type> requires std::copy_constructible<Type> || std::move_constructible<Type>
+    template<typename Type>
     class SPSCQueue;
 }
 
@@ -24,7 +24,7 @@ namespace kF::Core
  *
  * @tparam Type to be inserted
  */
-template<typename Type> requires std::copy_constructible<Type> || std::move_constructible<Type>
+template<typename Type>
 class KF_ALIGN_CACHELINE2 kF::Core::SPSCQueue
 {
 public:
@@ -43,8 +43,7 @@ public:
     };
 
     /** @brief Default constructor initialize the queue
-     * If 'usedAsBuffer' is true, capacity will be increased by 1 because the queue implementation needs one unused value when the queue is full
-    */
+     * If 'usedAsBuffer' is true, capacity will be increased by 1 because the queue implementation needs one unused value when the queue is full */
     SPSCQueue(const std::size_t capacity, const bool usedAsBuffer = true) noexcept;
 
     /** @brief Destruct and release all memory (unsafe) */
