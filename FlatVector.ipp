@@ -66,12 +66,14 @@ template<typename Type>
 inline void kF::Core::FlatVector<Type>::erase(const Iterator from, const Iterator to)
     noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
-    std::destroy(from, to);
-    // auto target = to + 1;
-    // for (auto it = from; it != to) {
-
-    // }
-    std::copy(std::make_move_iterator(to + 1), std::make_move_iterator(endUnsafe()), from);
+    if (from == to) [[unlikely]]
+        return;
+    const auto end = endUnsafe();
+    if constexpr (std::is_move_assignable_v<Type> && !Utils::IsMoveIterator<Iterator>::Value)
+        std::copy(std::make_move_iterator(to), std::make_move_iterator(end), from);
+    else
+        std::copy(to, end, from);
+    std::destroy(to, end);
     _ptr->size -= std::distance(from, to);
 }
 
@@ -125,7 +127,7 @@ inline void kF::Core::FlatVector<Type>::resize(const InputIterator from, const I
 
 template<typename Type>
 template<std::input_iterator InputIterator>
-inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator at, const InputIterator from, const InputIterator to)
+inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator pos, const InputIterator from, const InputIterator to)
     noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
     requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
 {
@@ -134,11 +136,11 @@ inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>:
 
     if (!count) [[unlikely]]
         return end();
-    else if (at == nullptr) [[unlikely]] {
+    else if (pos == nullptr) [[unlikely]] {
         reserve(count);
         position = 0;
     } else [[likely]]
-        position = at - beginUnsafe();
+        position = pos - beginUnsafe();
     if (const auto currentSize = sizeUnsafe(), total = currentSize + count; total > capacityUnsafe()) [[unlikely]] {
         const auto tmpSize = currentSize + std::max(currentSize, count);
         const auto tmpPtr = reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * tmpSize));
@@ -169,17 +171,17 @@ inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>:
 }
 
 template<typename Type>
-inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator at, const std::size_t count, const Type &value)
+inline typename kF::Core::FlatVector<Type>::Iterator kF::Core::FlatVector<Type>::insert(const Iterator pos, const std::size_t count, const Type &value)
     noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
     requires std::copy_constructible<Type>
 {
     if (!count) [[unlikely]]
         return end();
-    else if (at == nullptr) [[unlikely]] {
+    else if (pos == nullptr) [[unlikely]] {
         resize(count, value);
         return begin();
     }
-    std::size_t position = at - beginUnsafe();
+    std::size_t position = pos - beginUnsafe();
     const auto currentBegin = beginUnsafe();
     const auto currentEnd = endUnsafe();
     const auto currentSize = sizeUnsafe();

@@ -142,7 +142,7 @@ inline void kF::Core::FlatStringBase<Type>::resize(const InputIterator from, con
 
 template<typename Type>
 template<std::input_iterator InputIterator>
-kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(const Iterator at, const InputIterator from, const InputIterator to)
+kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(const Iterator pos, const InputIterator from, const InputIterator to)
     noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     const auto count { static_cast<std::size_t>(std::distance(from, to)) };
@@ -151,7 +151,7 @@ kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(
         reserve(count);
         position = 0;
     } else
-        position = at - beginUnsafe();
+        position = pos - beginUnsafe();
     if (const auto currentSize = sizeUnsafe(), total = currentSize + count; total > capacityUnsafe()) [[unlikely]] {
         const auto tmpSize = currentSize + std::max(currentSize, count);
         const auto tmpPtr = reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * tmpSize));
@@ -182,15 +182,15 @@ kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(
 }
 
 template<typename Type>
-kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(const Iterator at, const std::size_t count, const Type &value)
+kF::Core::FlatStringBase<Type>::Iterator kF::Core::FlatStringBase<Type>::insert(const Iterator pos, const std::size_t count, const Type &value)
     noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
     requires std::copy_constructible<Type>
 {
-    if (at == nullptr) [[unlikely]] {
+    if (pos == nullptr) [[unlikely]] {
         resize(count, value);
         return begin();
     }
-    std::size_t position = at - beginUnsafe();
+    std::size_t position = pos - beginUnsafe();
     if (const auto currentSize = sizeUnsafe(), total = currentSize + count; total > capacityUnsafe()) [[unlikely]] {
         const auto tmpSize = currentSize + std::max(currentSize, count);
         const auto tmpPtr = reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * tmpSize));

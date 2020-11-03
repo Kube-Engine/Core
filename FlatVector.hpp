@@ -129,18 +129,18 @@ public:
     void pop(void) noexcept_destructible(Type);
 
     /** @brief Insert an initializer list */
-    Iterator insert(const Iterator at, std::initializer_list<Type> &&init)
+    Iterator insert(const Iterator pos, std::initializer_list<Type> &&init)
         noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
-        { return insert(at, init.begin(), init.end()); }
+        { return insert(pos, init.begin(), init.end()); }
 
     /** @brief Insert a range of element by iterating over iterators */
     template<std::input_iterator InputIterator>
-    Iterator insert(const Iterator at, const InputIterator from, const InputIterator to)
+    Iterator insert(const Iterator pos, const InputIterator from, const InputIterator to)
         noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
         requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>;
 
     /** @brief Insert a range of copies */
-    Iterator insert(const Iterator at, const std::size_t count, const Type &value)
+    Iterator insert(const Iterator pos, const std::size_t count, const Type &value)
         noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
         requires std::copy_constructible<Type>;
 
@@ -154,9 +154,9 @@ public:
         { erase(from, from + count); }
 
     /** @brief Remove a specific element */
-    void erase(const Iterator it)
+    void erase(const Iterator pos)
         noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
-        { erase(it, it + 1); }
+        { erase(pos, pos + 1); }
 
     /** @brief Resize the vector using default constructor to initialize each element */
     void resize(const std::size_t count)
