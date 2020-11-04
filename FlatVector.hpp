@@ -99,7 +99,7 @@ protected:
         { return reinterpret_cast<Type *>(reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * capacity)) + 1); }
 
     /** @brief Deallocates a buffer */
-    [[nodiscard]] void deallocate(Type *data) noexcept
+    void deallocate(Type *data) noexcept
         { std::free(reinterpret_cast<Header *>(data) - 1); }
 
 private:

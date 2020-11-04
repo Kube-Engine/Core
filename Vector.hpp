@@ -92,7 +92,7 @@ protected:
         { return reinterpret_cast<Type *>(std::malloc(sizeof(Type) * capacity)); }
 
     /** @brief Deallocates a buffer */
-    [[nodiscard]] void deallocate(Type *data) noexcept { std::free(data); }
+    void deallocate(Type *data) noexcept { std::free(data); }
 
 private:
     Type *_data { nullptr };

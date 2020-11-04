@@ -23,6 +23,24 @@ public:
     using Iterator = decltype(std::declval<Base &>().begin());
     using ConstIterator = decltype(std::declval<const Base &>().begin());
 
+    using Base::data;
+    using Base::dataUnsafe;
+    using Base::setData;
+    using Base::size;
+    using Base::sizeUnsafe;
+    using Base::setSize;
+    using Base::capacity;
+    using Base::capacityUnsafe;
+    using Base::setCapacity;
+    using Base::begin;
+    using Base::beginUnsafe;
+    using Base::end;
+    using Base::endUnsafe;
+    using Base::allocate;
+    using Base::deallocate;
+    using Base::empty;
+    using Base::swap;
+
     /** @brief Default constructor */
     VectorDetails(void) noexcept = default;
 

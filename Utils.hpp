@@ -18,7 +18,7 @@
 #define nothrow_move_assignable(Type) std::is_nothrow_move_assignable_v<Type>
 #define nothrow_forward_assignable(Type) (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_copy_assignable(Type))
 #define nothrow_destructible(Type) std::is_nothrow_destructible_v<Type>
-#define nothrow_invokable(Function, ...) std::is_nothrow_invokable_v<Function __VA_OPT__(,) __VA_ARGS__>
+#define nothrow_invocable(Function, ...) std::is_nothrow_invocable_v<Function __VA_OPT__(,) __VA_ARGS__>
 #define nothrow_forward_iterator_constructible(Type) (kF::Core::Utils::IsMoveIterator<Type>::Value ? nothrow_move_constructible(Type) : nothrow_copy_constructible(Type))
 #define nothrow_convertible(From, To) std::is_nothrow_convertible_v<From, To>
 #define nothrow_expr(Expression) noexcept(Expression)
@@ -32,7 +32,7 @@
 #define noexcept_move_assignable(Type) noexcept(nothrow_move_assignable(Type))
 #define noexcept_forward_assignable(Type) noexcept(nothrow_forward_assignable(Type))
 #define noexcept_destructible(Type) noexcept(nothrow_destructible(Type))
-#define noexcept_invokable(Function, ...) noexcept(nothrow_invokable(Function __VA_OPT__(,) __VA_ARGS__))
+#define noexcept_invocable(Function, ...) noexcept(nothrow_invocable(Function __VA_OPT__(,) __VA_ARGS__))
 #define noexcept_convertible(From, To) noexcept(nothrow_convertible(From, To))
 #define noexcept_expr(Expression) noexcept(nothrow_expr(Expression))
 

@@ -17,8 +17,8 @@ namespace kF
     /** @brief Compile-time string hashing */
     constexpr HashedName Hash(char const *str, std::size_t len) noexcept {
         HashedName h = HashOffset;
-        for (int i = 0; i < len; ++i)
-            h = 31 * h + str[i];
+        for (std::size_t i = 0ul; i < len; ++i)
+            h = 31ul * h + str[i];
         return h;
     }
 
