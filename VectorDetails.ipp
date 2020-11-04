@@ -14,7 +14,7 @@ inline Type &kF::Core::Internal::VectorDetails<Base, Type, Range>::push(Args &&.
     else if (sizeUnsafe() == capacityUnsafe()) [[unlikely]]
         grow();
     const auto currentSize = sizeUnsafe();
-    Type * const elem = data() + currentSize;
+    Type * const elem = dataUnsafe() + currentSize;
     setSize(currentSize + 1);
     new (elem) Type(std::forward<Args>(args)...);
     return *elem;
@@ -25,7 +25,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::pop(void) noex
 {
     const auto desiredSize = sizeUnsafe() - 1;
 
-    data()[desiredSize].~Type();
+    dataUnsafe()[desiredSize].~Type();
     setSize(desiredSize);
 }
 
@@ -40,14 +40,14 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range>::Iterator
 
     if (!count) [[unlikely]]
         return end();
-    else if (pos == nullptr) [[unlikely]] {
+    else if (pos == Iterator()) [[unlikely]] {
         reserve(count);
         position = 0;
     } else [[likely]]
         position = pos - beginUnsafe();
     const auto currentSize = sizeUnsafe();
     if (const auto currentCapacity = capacityUnsafe(), total = currentSize + count; total > currentCapacity) [[unlikely]] {
-        const auto currentData = data();
+        const auto currentData = dataUnsafe();
         const auto desiredCapacity = currentCapacity + std::max(currentCapacity, count);
         const auto tmpData = allocate(desiredCapacity);
         std::uninitialized_move_n(currentData, position, tmpData);
@@ -121,12 +121,12 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::erase(const It
     if (from == to) [[unlikely]]
         return;
     const auto end = endUnsafe();
+    setSize(sizeUnsafe() - std::distance(from, to));
     if constexpr (std::is_move_assignable_v<Type> && !Utils::IsMoveIterator<Iterator>::Value)
         std::copy(std::make_move_iterator(to), std::make_move_iterator(end), from);
     else
         std::copy(to, end, from);
     std::destroy(to, end);
-    setSize(sizeUnsafe() - std::distance(from, to));
 }
 
 template<typename Base, typename Type, std::integral Range>
@@ -136,8 +136,10 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::resize(const s
     if (!count) [[unlikely]] {
         clear();
         return;
-    } else if (!data() || capacityUnsafe() < count) [[likely]]
-        reserve(count);
+    } else if (!data()) [[likely]]
+        reserveUnsafe<false>(count);
+    else if (capacityUnsafe() < count)
+        reserveUnsafe<true>(count);
     else [[unlikely]]
         clearUnsafe();
     setSize(count);
@@ -151,8 +153,10 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::resize(const s
     if (!count) [[unlikely]] {
         clear();
         return;
-    } else if (!data() || capacityUnsafe() < count) [[likely]]
-        reserve(count);
+    } else if (!data()) [[likely]]
+        reserveUnsafe<false>(count);
+    else if (capacityUnsafe() < count)
+        reserveUnsafe<true>(count);
     else [[unlikely]]
         clearUnsafe();
     setSize(count);
@@ -169,24 +173,14 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::resize(const I
     if (!count) [[unlikely]] {
         clear();
         return;
-    }
-    reserve(count);
-    std::uninitialized_copy(from, to, beginUnsafe());
+    } else if (!data()) [[likely]]
+        reserveUnsafe<false>(count);
+    else if (capacityUnsafe() < count)
+        reserveUnsafe<true>(count);
+    else [[unlikely]]
+        clearUnsafe();
     setSize(count);
-}
-
-template<typename Base, typename Type, std::integral Range>
-inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::reserve(const Range capacity) noexcept_destructible(Type)
-{
-    if (data()) [[unlikely]] {
-        if (sizeUnsafe() != capacity) [[likely]]
-            releaseUnsafe();
-        else [[unlikely]]
-            return clearUnsafe();
-    }
-    setData(allocate(capacity));
-    setSize(0);
-    setCapacity(capacity);
+    std::uninitialized_copy(from, to, beginUnsafe());
 }
 
 template<typename Base, typename Type, std::integral Range>
@@ -199,7 +193,8 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::clear(void) no
 template<typename Base, typename Type, std::integral Range>
 inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::clearUnsafe(void) noexcept_destructible(Type)
 {
-    std::destroy_n(data(), sizeUnsafe());
+    std::destroy_n(dataUnsafe(), sizeUnsafe());
+    setSize(0);
 }
 
 template<typename Base, typename Type, std::integral Range>
@@ -213,13 +208,52 @@ template<typename Base, typename Type, std::integral Range>
 inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::releaseUnsafe(void) noexcept_destructible(Type)
 {
     clearUnsafe();
-    deallocate(data());
+    deallocate(dataUnsafe());
+    setCapacity(0);
+    setData(nullptr);
 }
 
 template<typename Base, typename Type, std::integral Range>
-inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::grow(const Range minimum) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+inline bool kF::Core::Internal::VectorDetails<Base, Type, Range>::reserve(const Range capacity)
+    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
-    const auto currentData = data();
+    if (data())
+        return reserveUnsafe<true>(capacity);
+    else
+        return reserveUnsafe<false>(capacity);
+}
+
+template<typename Base, typename Type, std::integral Range>
+template<bool IsSafe>
+inline bool kF::Core::Internal::VectorDetails<Base, Type, Range>::reserveUnsafe(const Range capacity)
+    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+{
+    if constexpr (IsSafe) {
+        if (capacityUnsafe() >= capacity) [[unlikely]]
+            return false;
+        const auto currentSize = sizeUnsafe();
+        const auto currentData = dataUnsafe();
+        const auto tmpData = allocate(capacity);
+        std::uninitialized_move_n(currentData, currentSize, tmpData);
+        std::destroy_n(currentData, currentSize);
+        deallocate(currentData);
+        setData(tmpData);
+        setSize(currentSize);
+        setCapacity(capacity);
+        return true;
+    } else {
+        setData(allocate(capacity));
+        setSize(0);
+        setCapacity(capacity);
+        return true;
+    }
+}
+
+template<typename Base, typename Type, std::integral Range>
+inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::grow(const Range minimum)
+    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+{
+    const auto currentData = dataUnsafe();
     const auto currentSize = sizeUnsafe();
     const auto currentCapacity = capacityUnsafe();
     const auto desiredCapacity = currentCapacity + std::max(currentCapacity, minimum);

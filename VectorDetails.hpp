@@ -11,19 +11,14 @@
 
 namespace kF::Core::Internal
 {
-    // template<typename Base, typename Type, typename Range>
-    // concept VectorBase = std::integral<Range> &&
-    //     requires(Base &base) {
-    //         std::same_as<Type *, base.data()>;
-    //     } && requires(const Base &base) {
-    //         std::same_as<const Type *, base.data()>;
-    //     };
+    template<typename Base, typename Type, typename Range>
+    concept VectorBaseRequirements = std::integral<Range>;
 
-    template<typename Base, typename Type, std::integral Range> //requires VectorBase<Base, Type, Range>
+    template<typename Base, typename Type, std::integral Range> //requires VectorBaseRequirements<Base, Type, Range>
     class VectorDetails;
 }
 
-template<typename Base, typename Type, std::integral Range>// requires kF::Core::Internal::VectorBase<Base, Type, Range>
+template<typename Base, typename Type, std::integral Range> //requires kF::Core::Internal::VectorBaseRequirements<Base, Type, Range>
 class kF::Core::Internal::VectorDetails : public Base
 {
 public:
@@ -66,8 +61,10 @@ public:
     /** @brief Release the vector */
     ~VectorDetails(void) noexcept_destructible(Type) { release(); }
 
+
     /** @brief Fast non-empty check */
     [[nodiscard]] operator bool(void) const noexcept { return !empty(); }
+
 
     /** @brief Begin / End helpers */
     [[nodiscard]] ConstIterator cbegin(void) const noexcept { return begin(); }
@@ -151,10 +148,6 @@ public:
         noexcept(nothrow_destructible(Type) && nothrow_forward_iterator_constructible(InputIterator));
 
 
-    /** @brief Reserve memory for fast emplace */
-    void reserve(const Range capacity) noexcept_destructible(Type);
-
-
     /** @brief Destroy all elements */
     void clear(void) noexcept_destructible(Type);
     void clearUnsafe(void) noexcept_destructible(Type);
@@ -164,8 +157,19 @@ public:
     void releaseUnsafe(void) noexcept_destructible(Type);
 
 
-    /** @brief Grow internal buffer */
+    /** @brief Reserve memory for fast emplace only if asked capacity is higher than current capacity
+     *  The data is either preserved or moved
+     *  @return True if the reserve happened and the data has been moved */
+    bool reserve(const Range capacity) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
+
+
+    /** @brief Grow internal buffer of a given minimum */
     void grow(const Range minimum = Range()) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
+
+private:
+    /** @brief Reserve unsafe takes IsSafe as template parameter */
+    template<bool IsSafe>
+    bool reserveUnsafe(const Range capacity) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 };
 
 #include "VectorDetails.ipp"

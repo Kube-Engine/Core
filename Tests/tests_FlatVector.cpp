@@ -21,8 +21,10 @@ TEST(FlatVector, Push)
     Core::FlatVector<std::size_t> vector;
 
     ASSERT_FALSE(vector);
-    for (auto i = 0ul; i < count; ++i)
-        vector.push(i);
+    for (auto i = 0ul; i < count; ++i) {
+        ASSERT_EQ(vector.push(i), i);
+        ASSERT_EQ(vector.size(), i + 1);
+    }
     ASSERT_TRUE(vector);
     ASSERT_EQ(vector.size(), count);
     auto i = 0ul;
@@ -106,8 +108,8 @@ TEST(FlatVector, Reserve)
     ASSERT_EQ(vector.size(), count);
     ASSERT_EQ(vector.capacity(), count);
     vector.reserve(count - 1);
-    ASSERT_EQ(vector.size(), 0);
-    ASSERT_EQ(vector.capacity(), count - 1);
+    ASSERT_EQ(vector.size(), count);
+    ASSERT_EQ(vector.capacity(), count);
 }
 
 TEST(FlatVector, InsertIterators)
@@ -140,7 +142,7 @@ TEST(FlatVector, InsertFill)
     vector.insert(vector.end(), 1, 32);
     ASSERT_EQ(vector.back(), 32);
     vector.insert(vector.end(), 42, 32);
-    for (auto i = 4u; i < vector.sizeUnsafe(); ++i)
+    for (auto i = 4u; i < vector.size(); ++i)
         ASSERT_EQ(vector[i], 32);
 }
 

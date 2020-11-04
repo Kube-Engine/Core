@@ -21,8 +21,10 @@ TEST(Vector, Push)
     Core::Vector<std::size_t> vector;
 
     ASSERT_FALSE(vector);
-    for (auto i = 0ul; i < count; ++i)
-        vector.push(i);
+    for (auto i = 0ul; i < count; ++i) {
+        ASSERT_EQ(vector.push(i), i);
+        ASSERT_EQ(vector.size(), i + 1);
+    }
     ASSERT_TRUE(vector);
     ASSERT_EQ(vector.size(), count);
     auto i = 0ul;
@@ -106,8 +108,8 @@ TEST(Vector, Reserve)
     ASSERT_EQ(vector.size(), count);
     ASSERT_EQ(vector.capacity(), count);
     vector.reserve(count - 1);
-    ASSERT_EQ(vector.size(), 0);
-    ASSERT_EQ(vector.capacity(), count - 1);
+    ASSERT_EQ(vector.size(), count);
+    ASSERT_EQ(vector.capacity(), count);
 }
 
 TEST(Vector, InsertIterators)

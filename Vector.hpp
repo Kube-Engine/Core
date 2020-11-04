@@ -17,22 +17,30 @@ namespace kF::Core
 
     template<typename Type, std::integral Range = std::size_t>
     using Vector = Internal::VectorDetails<Internal::VectorBase<Type, Range>, Type, Range>;
+
+    template<typename Type>
+    using TinyVector = Vector<Type, std::uint32_t>;
 }
 
+/** @brief Base implementation of a vector with size and capacity cached */
 template<typename Type, std::integral Range>
 class kF::Core::Internal::VectorBase
 {
 public:
+    /** @brief Output iterator */
     using Iterator = Type *;
+
+    /** @brief Input iterator */
     using ConstIterator = const Type *;
+
 
     /** @brief Fast empty check */
     [[nodiscard]] bool empty(void) const noexcept { return !_size; }
 
 
     /** @brief Get internal data pointer */
-    [[nodiscard]] Type *data(void) noexcept { return _data; }
-    [[nodiscard]] const Type *data(void) const noexcept { return _data; }
+    [[nodiscard]] Type *data(void) noexcept { return dataUnsafe(); }
+    [[nodiscard]] const Type *data(void) const noexcept { return dataUnsafe(); }
 
     /** @brief Get the size of the vector */
     [[nodiscard]] Range size(void) const noexcept { return sizeUnsafe(); }
@@ -52,10 +60,6 @@ public:
     void swap(VectorBase &other) noexcept;
 
 protected:
-
-    /** @brief Check if the vector is safe to access */
-    [[nodiscard]] constexpr bool isSafe(void) const noexcept { return true; }
-
     /** @brief Unsafe size getter */
     [[nodiscard]] Range sizeUnsafe(void) const noexcept { return _size; }
 
@@ -72,12 +76,15 @@ protected:
     /** @brief Protected capacity setter */
     void setCapacity(const Range capacity) noexcept { _capacity = capacity; }
 
+    /** @brief Unsafe data */
+    [[nodiscard]] Type *dataUnsafe(void) noexcept { return _data; }
+    [[nodiscard]] const Type *dataUnsafe(void) const noexcept { return _data; }
 
     /** @brief Unsafe begin / end overloads */
     [[nodiscard]] Iterator beginUnsafe(void) noexcept { return data(); }
-    [[nodiscard]] Iterator endUnsafe(void) noexcept { return data() + _size - 1; }
+    [[nodiscard]] Iterator endUnsafe(void) noexcept { return data() + sizeUnsafe(); }
     [[nodiscard]] ConstIterator beginUnsafe(void) const noexcept { return data(); }
-    [[nodiscard]] ConstIterator endUnsafe(void) const noexcept { return data() + _size - 1; }
+    [[nodiscard]] ConstIterator endUnsafe(void) const noexcept { return data() + sizeUnsafe(); }
 
 
     /** @brief Allocates a new buffer */
