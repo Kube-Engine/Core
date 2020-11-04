@@ -30,6 +30,152 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::pop(void) noex
 }
 
 template<typename Base, typename Type, std::integral Range>
+template<std::input_iterator InputIterator> requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
+inline typename kF::Core::Internal::VectorDetails<Base, Type, Range>::Iterator
+    kF::Core::Internal::VectorDetails<Base, Type, Range>::insert(const Iterator pos, const InputIterator from, const InputIterator to)
+    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+{
+    const std::size_t count = std::distance(from, to);
+    std::size_t position;
+
+    if (!count) [[unlikely]]
+        return end();
+    else if (pos == nullptr) [[unlikely]] {
+        reserve(count);
+        position = 0;
+    } else [[likely]]
+        position = pos - beginUnsafe();
+    const auto currentSize = sizeUnsafe();
+    if (const auto currentCapacity = capacityUnsafe(), total = currentSize + count; total > currentCapacity) [[unlikely]] {
+        const auto currentData = data();
+        const auto desiredCapacity = currentCapacity + std::max(currentCapacity, count);
+        const auto tmpData = allocate(desiredCapacity);
+        std::uninitialized_move_n(currentData, position, tmpData);
+        std::uninitialized_move_n(currentData + position, count, tmpData + position + count);
+        std::copy(from, to, tmpData + position);
+        deallocate(currentData);
+        setData(tmpData);
+        setSize(total);
+        setCapacity(desiredCapacity);
+        return tmpData + position;
+    }
+    const auto currentBegin = beginUnsafe();
+    const auto currentEnd = endUnsafe();
+    if (const auto after = currentSize - position; after > count) {
+        std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
+        std::copy(from, to, currentBegin + position);
+    } else {
+        auto mid = from;
+        std::advance(mid, after);
+        std::uninitialized_move(mid, to, currentEnd);
+        std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
+        std::copy(from, to, currentBegin + position);
+    }
+    setSize(currentSize + count);
+    return currentBegin + position;
+}
+
+template<typename Base, typename Type, std::integral Range>
+inline typename kF::Core::Internal::VectorDetails<Base, Type, Range>::Iterator
+    kF::Core::Internal::VectorDetails<Base, Type, Range>::insert(const Iterator pos, const std::size_t count, const Type &value)
+    noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
+{
+    if (!count) [[unlikely]]
+        return end();
+    else if (pos == nullptr) [[unlikely]] {
+        resize(count, value);
+        return beginUnsafe();
+    }
+    std::size_t position = pos - beginUnsafe();
+    const auto currentBegin = beginUnsafe();
+    const auto currentEnd = endUnsafe();
+    const auto currentSize = sizeUnsafe();
+    if (const auto currentCapacity = capacityUnsafe(), total = currentSize + count; total > currentCapacity) [[unlikely]] {
+        const auto desiredCapacity = currentCapacity + std::max(currentCapacity, count);
+        const auto tmpData = allocate(desiredCapacity);
+        std::uninitialized_move_n(currentBegin, position, tmpData);
+        std::uninitialized_move(currentBegin + position, currentEnd, tmpData + position + count);
+        std::fill_n(tmpData + position, count, value);
+        deallocate(data());
+        setData(tmpData);
+        setSize(total);
+        setCapacity(desiredCapacity);
+        return tmpData + position;
+    } else if (const auto after = sizeUnsafe() - position; after > count) {
+        std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
+        std::fill_n(currentBegin + position, count, value);
+    } else {
+        const auto mid = count - after;
+        std::fill_n(currentEnd, mid, value);
+        std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + mid);
+        std::fill_n(currentBegin + position, count - mid, value);
+    }
+    setSize(currentSize + count);
+    return currentBegin + position;
+}
+
+template<typename Base, typename Type, std::integral Range>
+inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::erase(const Iterator from, const Iterator to)
+    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+{
+    if (from == to) [[unlikely]]
+        return;
+    const auto end = endUnsafe();
+    if constexpr (std::is_move_assignable_v<Type> && !Utils::IsMoveIterator<Iterator>::Value)
+        std::copy(std::make_move_iterator(to), std::make_move_iterator(end), from);
+    else
+        std::copy(to, end, from);
+    std::destroy(to, end);
+    setSize(sizeUnsafe() - std::distance(from, to));
+}
+
+template<typename Base, typename Type, std::integral Range>
+inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::resize(const std::size_t count)
+    noexcept(std::is_nothrow_constructible_v<Type> && nothrow_destructible(Type))
+{
+    if (!count) [[unlikely]] {
+        clear();
+        return;
+    } else if (!data() || capacityUnsafe() < count) [[likely]]
+        reserve(count);
+    else [[unlikely]]
+        clearUnsafe();
+    setSize(count);
+    std::uninitialized_default_construct_n(data(), count);
+}
+
+template<typename Base, typename Type, std::integral Range>
+inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::resize(const std::size_t count, const Type &value)
+    noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
+{
+    if (!count) [[unlikely]] {
+        clear();
+        return;
+    } else if (!data() || capacityUnsafe() < count) [[likely]]
+        reserve(count);
+    else [[unlikely]]
+        clearUnsafe();
+    setSize(count);
+    std::uninitialized_fill_n(data(), count, value);
+}
+
+template<typename Base, typename Type, std::integral Range>
+template<std::input_iterator InputIterator>
+inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::resize(const InputIterator from, const InputIterator to)
+    noexcept(nothrow_destructible(Type) && nothrow_forward_iterator_constructible(InputIterator))
+{
+    const std::size_t count = std::distance(from, to);
+
+    if (!count) [[unlikely]] {
+        clear();
+        return;
+    }
+    reserve(count);
+    std::uninitialized_copy(from, to, beginUnsafe());
+    setSize(count);
+}
+
+template<typename Base, typename Type, std::integral Range>
 inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::reserve(const Range capacity) noexcept_destructible(Type)
 {
     if (data()) [[unlikely]] {

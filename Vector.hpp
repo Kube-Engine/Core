@@ -74,10 +74,10 @@ protected:
 
 
     /** @brief Unsafe begin / end overloads */
-    [[nodiscard]] Iterator beginUnsafe(void) noexcept { return _data; }
-    [[nodiscard]] Iterator endUnsafe(void) noexcept { return endUnsafe(); }
-    [[nodiscard]] ConstIterator beginUnsafe(void) const noexcept { return _data; }
-    [[nodiscard]] ConstIterator endUnsafe(void) const noexcept { return endUnsafe(); }
+    [[nodiscard]] Iterator beginUnsafe(void) noexcept { return data(); }
+    [[nodiscard]] Iterator endUnsafe(void) noexcept { return data() + _size - 1; }
+    [[nodiscard]] ConstIterator beginUnsafe(void) const noexcept { return data(); }
+    [[nodiscard]] ConstIterator endUnsafe(void) const noexcept { return data() + _size - 1; }
 
 
     /** @brief Allocates a new buffer */
