@@ -11,14 +11,11 @@
 
 namespace kF::Core::Internal
 {
-    template<typename Base, typename Type, typename Range>
-    concept VectorBaseRequirements = std::integral<Range>;
-
-    template<typename Base, typename Type, std::integral Range> //requires VectorBaseRequirements<Base, Type, Range>
+    template<typename Base, typename Type, std::integral Range>
     class VectorDetails;
 }
 
-template<typename Base, typename Type, std::integral Range> //requires kF::Core::Internal::VectorBaseRequirements<Base, Type, Range>
+template<typename Base, typename Type, std::integral Range>
 class kF::Core::Internal::VectorDetails : public Base
 {
 public:
