@@ -54,6 +54,7 @@ namespace kF::Core::Utils
     /** @brief Theorical cacheline size */
     constexpr std::size_t CacheLineSize = 64ul;
 
+
     /** @brief Helper to know if a given type is a std::move_iterator */
     template<typename Type>
     struct IsMoveIterator;
@@ -81,4 +82,44 @@ namespace kF::Core::Utils
     static_assert(IsMoveIterator<std::reverse_iterator<std::move_iterator<void *>>>::Value, "IsMoveIterator not working");
     static_assert(!IsMoveIterator<std::reverse_iterator<void *>>::Value, "IsMoveIterator not working");
     static_assert(!IsMoveIterator<void *>::Value, "IsMoveIterator not working");
+
+
+    /** @brief Default type used when a detection fails */
+    struct NoneSuch {};
+
+    /** @brief Detector detected invalid expression */
+    template<typename Default, typename AlwaysVoid, template<typename...> typename _Op, typename... _Args>
+    struct Detector
+    {
+        using Value = std::false_type;
+        using Type = Default;
+    };
+
+    /** @brief Detector detected valid expression */
+    template<typename Default, template<typename...> typename Op, typename... Args>
+    struct Detector<Default, std::void_t<Op<Args...>>, Op, Args...>
+    {
+        using Value = std::true_type;
+        using Type = Op<Args...>;
+    };
+
+    /** @brief Boolean that indicate if detector detected a valid expression or not */
+    template<template<typename...> class Op, typename... Args>
+    constexpr bool IsDetected = Detector<NoneSuch, void, Op, Args...>::Value::value;
+
+    /** @brief Type of the detected expression, if the detection failed returns NoneSuch */
+    template<template<typename...> class Op, typename... Args>
+    using DetectedType = typename Detector<NoneSuch, void, Op, Args...>::Type;
+
+    /** @brief Type of the detected expression, if the detection failed returns NoneSuch */
+    template<typename Default, template<typename...> class Op, typename... Args>
+    using DetectedOrType = typename Detector<Default, void, Op, Args...>::Type;
+
+    /** @brief Check if the expression perfectly match a type */
+    template<typename Expected, template<typename...> class Op, typename... Args>
+    constexpr bool IsDetectedExact = std::is_same_v<Expected, DetectedType<Op, Args...>>;
+
+    /** @brief Check if the expression is convertible to a type */
+    template<typename Convertible, template<typename...> class Op, typename... Args>
+    constexpr bool IsDetectedConvertible = std::is_convertible_v<Convertible, DetectedType<Op, Args...>>;
 }

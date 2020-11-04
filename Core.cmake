@@ -19,6 +19,8 @@ set(KubeCoreSources
     ${KubeCoreDir}/FlatVector.ipp
     ${KubeCoreDir}/FlatString.hpp
     ${KubeCoreDir}/FlatString.ipp
+    ${KubeCoreDir}/VectorDetails.hpp
+    ${KubeCoreDir}/Vector.hpp
 )
 
 add_library(${PROJECT_NAME} INTERFACE) #${KubeCoreSources})
