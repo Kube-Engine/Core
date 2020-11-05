@@ -23,6 +23,7 @@ public:
     using Iterator = decltype(std::declval<Base &>().begin());
     using ConstIterator = decltype(std::declval<const Base &>().begin());
 
+    /** @brief All required base functions */
     using Base::data;
     using Base::dataUnsafe;
     using Base::setData;
