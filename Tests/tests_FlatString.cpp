@@ -9,8 +9,6 @@
 
 using namespace kF;
 
-#include <iostream>
-
 TEST(FlatString, Basics)
 {
     constexpr const char *value = "hello world";
