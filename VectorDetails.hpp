@@ -6,6 +6,7 @@
 #pragma once
 
 #include <initializer_list>
+#include <memory>
 
 #include "Utils.hpp"
 
@@ -52,23 +53,23 @@ public:
     /** @brief Move constructor */
     VectorDetails(VectorDetails &&other) noexcept { swap(other); }
 
-    /** @brief Insert constructor */
-    template<std::input_iterator InputIterator>
-    VectorDetails(const InputIterator from, const InputIterator to)
-        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
-        { resize(from, to); }
-
     /** @brief Resize with default constructor */
-    VectorDetails(const std::size_t count)
+    VectorDetails(const Range count)
         noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
         requires std::copy_constructible<Type>
         { resize(count); }
 
     /** @brief Resize with copy constructor */
-    VectorDetails(const std::size_t count, const Type &value)
+    VectorDetails(const Range count, const Type &value)
         noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
         requires std::copy_constructible<Type>
         { resize(count, value); }
+
+    /** @brief Insert constructor */
+    template<std::input_iterator InputIterator>
+    VectorDetails(const InputIterator from, const InputIterator to)
+        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+        { resize(from, to); }
 
     /** @brief Initializer list constructor */
     VectorDetails(std::initializer_list<Type> init) noexcept_forward_constructible(Type)
@@ -125,14 +126,18 @@ public:
         noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
         { return insert(pos, init.begin(), init.end()); }
 
+    /** @brief Insert a range of copies */
+    Iterator insert(const Iterator pos, const Range count)
+        noexcept(nothrow_constructible(Type) && nothrow_destructible(Type));
+
+    /** @brief Insert a range of copies */
+    Iterator insert(const Iterator pos, const Range count, const Type &value)
+        noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type));
+
     /** @brief Insert a range of element by iterating over iterators */
     template<std::input_iterator InputIterator> requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
     Iterator insert(const Iterator pos, const InputIterator from, const InputIterator to)
         noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
-
-    /** @brief Insert a range of copies */
-    Iterator insert(const Iterator pos, const std::size_t count, const Type &value)
-        noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type));
 
 
     /** @brief Remove a range of elements */
@@ -140,7 +145,7 @@ public:
         noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
     /** @brief Remove a range of elements */
-    void erase(const Iterator from, const std::size_t count)
+    void erase(const Iterator from, const Range count)
         noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
         { erase(from, from + count); }
 
@@ -151,11 +156,11 @@ public:
 
 
     /** @brief Resize the vector using default constructor to initialize each element */
-    void resize(const std::size_t count)
+    void resize(const Range count)
         noexcept(std::is_nothrow_constructible_v<Type> && nothrow_destructible(Type));
 
     /** @brief Resize the vector by copying given element */
-    void resize(const std::size_t count, const Type &type)
+    void resize(const Range count, const Type &type)
         noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type));
 
     /** @brief Resize the vector with input iterators */
