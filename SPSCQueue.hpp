@@ -25,7 +25,7 @@ namespace kF::Core
  * @tparam Type to be inserted
  */
 template<typename Type>
-class KF_ALIGN_CACHELINE2 kF::Core::SPSCQueue
+class KF_ALIGN_DOUBLE_CACHELINE kF::Core::SPSCQueue
 {
 public:
     /** @brief Buffer structure containing all cells */
@@ -117,6 +117,6 @@ private:
         noexcept(nothrow_destructible(Type) && nothrow_forward_assignable(Type));
 };
 
-static_assert(sizeof(kF::Core::SPSCQueue<int>) == 4 * kF::Core::Utils::CacheLineSize);
+static_assert(sizeof(kF::Core::SPSCQueue<int>) == 4 * kF::Core::CacheLineSize);
 
 #include "SPSCQueue.ipp"

@@ -89,7 +89,7 @@ protected:
 
     /** @brief Allocates a new buffer */
     [[nodiscard]] Type *allocate(const Range capacity) noexcept
-        { return reinterpret_cast<Type *>(std::malloc(sizeof(Type) * capacity)); }
+        { return reinterpret_cast<Type *>(Utils::AlignedAlloc<alignof(Type)>(sizeof(Type) * capacity)); }
 
     /** @brief Deallocates a buffer */
     void deallocate(Type *data) noexcept { std::free(data); }

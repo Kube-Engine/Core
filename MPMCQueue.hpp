@@ -22,7 +22,7 @@ namespace kF::Core
  * @tparam Type to be inserted
  */
 template<typename Type>
-class KF_ALIGN_CACHELINE2 kF::Core::MPMCQueue
+class KF_ALIGN_DOUBLE_CACHELINE kF::Core::MPMCQueue
 {
 public:
     /** @brief Each cell represent the queued type and a sequence index */
@@ -80,6 +80,6 @@ private:
     MPMCQueue(MPMCQueue &&other) = delete;
 };
 
-static_assert(sizeof(kF::Core::MPMCQueue<int>) == 4 * kF::Core::Utils::CacheLineSize);
+static_assert(sizeof(kF::Core::MPMCQueue<int>) == 4 * kF::Core::CacheLineSize);
 
 #include "MPMCQueue.ipp"

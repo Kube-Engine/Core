@@ -10,7 +10,7 @@ inline Type &kF::Core::Internal::VectorDetails<Base, Type, Range>::push(Args &&.
     requires std::constructible_from<Type, Args...>
 {
     if (!data()) [[unlikely]]
-        reserve(2);
+        reserveUnsafe<false>(2);
     else if (sizeUnsafe() == capacityUnsafe()) [[unlikely]]
         grow();
     const auto currentSize = sizeUnsafe();
@@ -182,7 +182,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::resize(const R
     else [[unlikely]]
         clearUnsafe();
     setSize(count);
-    std::uninitialized_default_construct_n(data(), count);
+    std::uninitialized_default_construct_n(dataUnsafe(), count);
 }
 
 template<typename Base, typename Type, std::integral Range>
@@ -199,7 +199,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::resize(const R
     else [[unlikely]]
         clearUnsafe();
     setSize(count);
-    std::uninitialized_fill_n(data(), count, value);
+    std::uninitialized_fill_n(dataUnsafe(), count, value);
 }
 
 template<typename Base, typename Type, std::integral Range>

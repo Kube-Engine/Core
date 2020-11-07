@@ -37,7 +37,7 @@ public:
 
 
     /** @brief Vector header, aligned to either sizeof(Range) * 2 or size of a cacheline depending on Type size */
-    struct alignas(sizeof(Type) <= sizeof(Range) * 2 ? sizeof(Range) * 2 : kF::Core::Utils::CacheLineSize) Header
+    struct alignas(sizeof(Type) <= sizeof(Range) * 2 ? sizeof(Range) * 2 : kF::Core::CacheLineSize) Header
     {
         Range size {};
         Range capacity {};
@@ -96,7 +96,7 @@ protected:
 
     /** @brief Allocates a new buffer */
     [[nodiscard]] Type *allocate(const Range capacity) noexcept
-        { return reinterpret_cast<Type *>(reinterpret_cast<Header *>(std::malloc(sizeof(Header) + sizeof(Type) * capacity)) + 1); }
+        { return reinterpret_cast<Type *>(reinterpret_cast<Header *>(Utils::AlignedAlloc<alignof(Header)>(sizeof(Header) + sizeof(Type) * capacity)) + 1); }
 
     /** @brief Deallocates a buffer */
     void deallocate(Type *data) noexcept
