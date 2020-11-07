@@ -64,10 +64,9 @@ namespace kF::Core
 
     namespace Utils
     {
-        /** @brief Forwards to std::aligned_alloc, but ensure that required alignment is at least 'std::max_align_t' (it cause failure on some systems) */
+        /** @brief Forwards to std::aligned_alloc, but ensure arguments */
         template<std::size_t RequiredAlignment>
-        [[nodiscard]] inline void *AlignedAlloc(const std::size_t bytes) noexcept
-            { return std::aligned_alloc(std::max(alignof(std::max_align_t), RequiredAlignment), bytes); }
+        [[nodiscard]] void *AlignedAlloc(const std::size_t bytes) noexcept;
 
         /** @brief Helper to know if a given type is a std::move_iterator */
         template<typename Type>
@@ -138,3 +137,5 @@ namespace kF::Core
         constexpr bool IsDetectedConvertible = std::is_convertible_v<Convertible, DetectedType<Op, Args...>>;
     }
 }
+
+#include "Utils.ipp"
