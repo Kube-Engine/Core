@@ -22,7 +22,7 @@ namespace kF::Core
  * @tparam Type to be inserted
  */
 template<typename Type>
-class KF_ALIGN_DOUBLE_CACHELINE kF::Core::MPMCQueue
+class alignas_double_cacheline kF::Core::MPMCQueue
 {
 public:
     /** @brief Each cell represent the queued type and a sequence index */
@@ -70,16 +70,17 @@ public:
     void clear(void) noexcept_destructible(Type) { for (Type tmp; pop(tmp);); }
 
 private:
-    KF_ALIGN_CACHELINE std::atomic<std::size_t> _tail { 0 }; // Tail accessed by producers
-    KF_ALIGN_CACHELINE Cache _tailCache; // Cache accessed by producers
-    KF_ALIGN_CACHELINE std::atomic<std::size_t> _head { 0 }; // Head accessed by consumers
-    KF_ALIGN_CACHELINE Cache _headCache; // Cache accessed by consumers
+    alignas_cacheline std::atomic<std::size_t> _tail { 0 }; // Tail accessed by producers
+    alignas_cacheline Cache _tailCache; // Cache accessed by producers
+    alignas_cacheline std::atomic<std::size_t> _head { 0 }; // Head accessed by consumers
+    alignas_cacheline Cache _headCache; // Cache accessed by consumers
 
     /** @brief Copy and move constructors disabled */
     MPMCQueue(const MPMCQueue &other) = delete;
     MPMCQueue(MPMCQueue &&other) = delete;
 };
 
-static_assert(sizeof(kF::Core::MPMCQueue<int>) == 4 * kF::Core::CacheLineSize);
+static_assert_sizeof(kF::Core::MPMCQueue<int>, 4 * kF::Core::CacheLineSize);
+static_assert_alignof_double_cacheline(kF::Core::MPMCQueue<int>);
 
 #include "MPMCQueue.ipp"

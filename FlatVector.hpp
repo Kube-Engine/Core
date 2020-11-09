@@ -105,8 +105,3 @@ protected:
 private:
     Header *_ptr { nullptr };
 };
-
-static_assert(sizeof(kF::Core::FlatVector<char[8], std::uint32_t>::Header) == 8);
-static_assert(sizeof(kF::Core::FlatVector<char[9], std::uint32_t>::Header) == 64);
-static_assert(sizeof(kF::Core::FlatVector<char[16], std::size_t>::Header) == 16);
-static_assert(sizeof(kF::Core::FlatVector<char[17], std::size_t>::Header) == 64);

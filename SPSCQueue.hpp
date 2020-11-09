@@ -25,7 +25,7 @@ namespace kF::Core
  * @tparam Type to be inserted
  */
 template<typename Type>
-class KF_ALIGN_DOUBLE_CACHELINE kF::Core::SPSCQueue
+class alignas_double_cacheline kF::Core::SPSCQueue
 {
 public:
     /** @brief Buffer structure containing all cells */
@@ -98,11 +98,11 @@ public:
     [[nodiscard]] std::size_t size(void) const noexcept;
 
 private:
-    KF_ALIGN_CACHELINE std::atomic<size_t> _tail { 0 }; // Tail accessed by both producer and consumer
-    KF_ALIGN_CACHELINE Cache _tailCache {}; // Cache accessed by consumer thread
+    alignas_cacheline std::atomic<size_t> _tail { 0 }; // Tail accessed by both producer and consumer
+    alignas_cacheline Cache _tailCache {}; // Cache accessed by consumer thread
 
-    KF_ALIGN_CACHELINE std::atomic<size_t> _head { 0 }; // Head accessed by both producer and consumer
-    KF_ALIGN_CACHELINE Cache _headCache {}; // Cache accessed by producer thread
+    alignas_cacheline std::atomic<size_t> _head { 0 }; // Head accessed by both producer and consumer
+    alignas_cacheline Cache _headCache {}; // Cache accessed by producer thread
 
     /** @brief Copy and move constructors disabled */
     SPSCQueue(const SPSCQueue &other) = delete;
@@ -117,6 +117,7 @@ private:
         noexcept(nothrow_destructible(Type) && nothrow_forward_assignable(Type));
 };
 
-static_assert(sizeof(kF::Core::SPSCQueue<int>) == 4 * kF::Core::CacheLineSize);
+static_assert_sizeof(kF::Core::SPSCQueue<int>, 4 * kF::Core::CacheLineSize);
+static_assert_alignof_double_cacheline(kF::Core::SPSCQueue<int>);
 
 #include "SPSCQueue.ipp"
