@@ -105,7 +105,7 @@ inline void kF::Core::FlatStringBase<Type>::pop(void) noexcept_destructible(Type
 template<typename Type>
 inline void kF::Core::FlatStringBase<Type>::resize(const std::size_t count)
     noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
-    requires std::constructible_from<Type>
+    requires std::default_initializable<Type>
 {
     if (!_ptr || _ptr->capacity < count) [[likely]]
         reserve(count);

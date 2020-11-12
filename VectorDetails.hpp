@@ -56,7 +56,7 @@ public:
     /** @brief Resize with default constructor */
     VectorDetails(const Range count)
         noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
-        requires std::copy_constructible<Type>
+        requires std::default_initializable<Type>
         { resize(count); }
 
     /** @brief Resize with copy constructor */
