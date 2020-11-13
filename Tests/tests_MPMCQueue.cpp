@@ -32,10 +32,10 @@ TEST(MPMCQueue, SinglePushPop)
     }
 }
 
-TEST(MPMCQueue, InstensiveThreading)
+TEST(MPMCQueue, IntensiveThreading)
 {
     constexpr auto ThreadCount = 4;
-    constexpr auto Counter = KUBE_DEBUG_BUILD ? 100 : 10000;
+    constexpr auto Counter = KUBE_DEBUG_BUILD ? 64 : 4096;
     constexpr std::size_t queueSize = 4096;
 
     static std::atomic<bool> running { true };

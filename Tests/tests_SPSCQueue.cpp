@@ -68,9 +68,9 @@ TEST(SPSCQueue, RangePushPop)
     ASSERT_EQ(queue.popRange(tmp.begin(), tmp.end()), maxQueueSize);
 }
 
-TEST(SPSCQueue, InstensiveThreading)
+TEST(SPSCQueue, IntensiveThreading)
 {
-    constexpr auto Counter = KUBE_DEBUG_BUILD ? 100 : 10000;
+    constexpr auto Counter = KUBE_DEBUG_BUILD ? 64 : 4096;
     constexpr std::size_t queueSize = 4096;
 
     Core::SPSCQueue<int> queue(queueSize);

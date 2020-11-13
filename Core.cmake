@@ -21,6 +21,9 @@ set(KubeCoreSources
     ${KubeCoreDir}/FlatString.ipp
     ${KubeCoreDir}/VectorDetails.hpp
     ${KubeCoreDir}/Vector.hpp
+    ${KubeCoreDir}/TrivialFunctor.hpp
+    ${KubeCoreDir}/DispatcherDetails.hpp
+    ${KubeCoreDir}/TrivialDispatcher.hpp
 )
 
 add_library(${PROJECT_NAME} INTERFACE) #${KubeCoreSources})
