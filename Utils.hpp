@@ -10,6 +10,7 @@
 #include <concepts>
 #include <cstddef>
 #include <iterator>
+#include <utility>
 
 /** @brief Helper used to pass template into macro */
 #define TEMPLATE_TYPE(Class, ...) decltype(std::declval<Class<__VA_ARGS__>>())
