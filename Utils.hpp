@@ -168,6 +168,10 @@ namespace kF::Core
         /** @brief Check if the expression is convertible to a type */
         template<typename Convertible, template<typename...> class Op, typename... Args>
         constexpr bool IsDetectedConvertible = std::is_convertible_v<Convertible, DetectedType<Op, Args...>>;
+
+        /** @brief Internal aligned alloc helper */
+        template<typename Type>
+        using HasAlignedAlloc = decltype(std::aligned_alloc(std::declval<Type>(), std::declval<Type>()));
     }
 }
 
