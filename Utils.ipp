@@ -10,9 +10,5 @@ template<std::size_t RequiredAlignment>
 
     constexpr auto Alignment = std::max(alignof(std::size_t), RequiredAlignment);
 
-    // Macos standard library is uncomplete !
-    if constexpr (Core::Utils::IsDetected<HasAlignedAlloc, std::size_t>)
-        return std::aligned_alloc(Alignment, (bytes + Alignment - 1) & -Alignment);
-    else
-        return std::malloc(bytes);
+    return std::aligned_alloc(Alignment, (bytes + Alignment - 1) & -Alignment);
 }
