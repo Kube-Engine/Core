@@ -3,7 +3,7 @@ project(KubeCore)
 get_filename_component(KubeCoreDir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 set(KubeCoreSources
-    ${KubeCoreDir}/Core.hpp
+    ${KubeCoreDir}/MacroUtils.hpp
     ${KubeCoreDir}/Version.hpp
     ${KubeCoreDir}/Hash.hpp
     ${KubeCoreDir}/Assert.hpp
