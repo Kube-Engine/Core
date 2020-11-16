@@ -21,6 +21,18 @@ public:
     /** @brief Deduced internal functor type */
     using InternalFunctor = TemplateFunctor<Return(Args...), CacheSize>;
 
+    /** @brief Default constructor */
+    DispatcherDetails(void) noexcept = default;
+
+    /** @brief Move constructor */
+    DispatcherDetails(DispatcherDetails &&dispatcher) noexcept = default;
+
+    /** @brief Destructor */
+    ~DispatcherDetails(void) noexcept = default;
+
+    /** @brief Move assignment*/
+    DispatcherDetails &operator=(DispatcherDetails &&dispatcher) noexcept = default;
+
 
     /** @brief Add a functor to dispatch list */
     template<typename Functor>

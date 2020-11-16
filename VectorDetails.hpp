@@ -78,6 +78,12 @@ public:
     /** @brief Release the vector */
     ~VectorDetails(void) noexcept_destructible(Type) { release(); }
 
+    /** @brief Copy assignment */
+    VectorDetails &operator=(const VectorDetails &other) noexcept_copy_constructible(Type)
+        { resize(other.begin(), other.end()); return *this; }
+
+    /** @brief Move assignment */
+    VectorDetails &operator=(VectorDetails &&other) noexcept { swap(other); return *this; }
 
     /** @brief Fast non-empty check */
     [[nodiscard]] operator bool(void) const noexcept { return !empty(); }

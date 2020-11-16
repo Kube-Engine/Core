@@ -161,10 +161,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range>::erase(const It
         return;
     const auto end = endUnsafe();
     setSize(sizeUnsafe() - std::distance(from, to));
-    if constexpr (std::is_move_assignable_v<Type> && !Utils::IsMoveIterator<Iterator>::Value)
-        std::copy(std::make_move_iterator(to), std::make_move_iterator(end), from);
-    else
-        std::copy(to, end, from);
+    std::copy(std::make_move_iterator(to), std::make_move_iterator(end), from);
     std::destroy(to, end);
 }
 

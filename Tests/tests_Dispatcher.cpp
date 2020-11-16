@@ -37,3 +37,25 @@ TEST(TrivialFunctor, Basics)
     dispatcher.dispatch([&i](int z) { ASSERT_EQ(z, 8); ++i; }, 4, 2);
     ASSERT_EQ(i, 0);
 }
+
+
+TEST(TrivialFunctor, Semantics)
+{
+    Core::TrivialDispatcher<int(int, int)> dispatcher;
+    Foo foo;
+
+    dispatcher.add<&Foo::memberFunction>(&foo);
+    dispatcher.add<&Foo::FreeFunction>();
+    dispatcher.add([](int x, int y) {
+        return x * y;
+    });
+
+    ASSERT_EQ(dispatcher.count(), 3);
+    auto i = 0u;
+    dispatcher.dispatch([&i](int z) { ASSERT_EQ(z, 8); ++i; }, 4, 2);
+    ASSERT_EQ(i, 3);
+    auto dispatcher2 = std::move(dispatcher);
+    i = 0;
+    dispatcher2.dispatch([&i](int z) { ASSERT_EQ(z, 8); ++i; }, 4, 2);
+    ASSERT_EQ(i, 3);
+}
