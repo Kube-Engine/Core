@@ -22,6 +22,7 @@ set(KubeCoreSources
     ${KubeCoreDir}/VectorDetails.hpp
     ${KubeCoreDir}/Vector.hpp
     ${KubeCoreDir}/TrivialFunctor.hpp
+    ${KubeCoreDir}/Functor.hpp
     ${KubeCoreDir}/DispatcherDetails.hpp
     ${KubeCoreDir}/TrivialDispatcher.hpp
 )

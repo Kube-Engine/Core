@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include <Kube/Core/TrivialFunctor.hpp>
+#include <Kube/Core/Functor.hpp>
 
 using namespace kF;
 
@@ -20,47 +20,43 @@ struct Foo
         { return x * y; }
 };
 
-TEST(TrivialFunctor, FreeBasics)
+TEST(Functor, FreeBasics)
 {
-    Core::TrivialFunctor<int(int, int)> func;
+    Core::Functor<int(int, int)> func;
     func.prepare<&Foo::FreeFunction>();
     ASSERT_TRUE(func);
     ASSERT_EQ(func(4, 2), 8);
     ASSERT_EQ(func(8, 2), 16);
-    auto func2(func);
-    ASSERT_TRUE(func);
+    auto func2(std::move(func));
+    ASSERT_FALSE(func);
     ASSERT_TRUE(func2);
     ASSERT_EQ(func2(4, 2), 8);
     ASSERT_EQ(func2(8, 2), 16);
     func2 = std::move(func);
-    ASSERT_TRUE(func2);
-    ASSERT_EQ(func2(4, 2), 8);
-    ASSERT_EQ(func2(8, 2), 16);
+    ASSERT_FALSE(func2);
 }
 
-TEST(TrivialFunctor, MemberBasics)
+TEST(Functor, MemberBasics)
 {
     Foo foo;
-    Core::TrivialFunctor<int(int)> func;
+    Core::Functor<int(int)> func;
     func.prepare<&Foo::memberFunction>(&foo);
     ASSERT_TRUE(func);
     ASSERT_EQ(func(4), 8);
     ASSERT_EQ(func(8), 16);
-    auto func2(func);
-    ASSERT_TRUE(func);
+    auto func2(std::move(func));
+    ASSERT_FALSE(func);
     ASSERT_TRUE(func2);
     ASSERT_EQ(func2(4), 8);
     ASSERT_EQ(func2(8), 16);
     func2 = std::move(func);
-    ASSERT_TRUE(func2);
-    ASSERT_EQ(func2(4), 8);
-    ASSERT_EQ(func2(8), 16);
+    ASSERT_FALSE(func2);
 }
 
-TEST(TrivialFunctor, LambdaBasics)
+TEST(Functor, TrivialFunctorBasics)
 {
     int y = 1;
-    Core::TrivialFunctor<int(int)> func;
+    Core::Functor<int(int)> func;
     func.prepare([&y](const int x) {
         return x * y;
     });
@@ -68,13 +64,30 @@ TEST(TrivialFunctor, LambdaBasics)
     ASSERT_TRUE(func);
     ASSERT_EQ(func(4), 8);
     ASSERT_EQ(func(8), 16);
-    auto func2(func);
-    ASSERT_TRUE(func);
+    auto func2(std::move(func));
+    ASSERT_FALSE(func);
     ASSERT_TRUE(func2);
     ASSERT_EQ(func2(4), 8);
     ASSERT_EQ(func2(8), 16);
     func2 = std::move(func);
+    ASSERT_FALSE(func2);
+}
+
+TEST(Functor, NonTrivialClassFunctorBasics)
+{
+    Core::Functor<int(int)> func;
+
+    func.prepare([y = std::make_unique<int>(2)](const int x) {
+        return x * *y;
+    });
+    ASSERT_TRUE(func);
+    ASSERT_EQ(func(4), 8);
+    ASSERT_EQ(func(8), 16);
+    auto func2(std::move(func));
+    ASSERT_FALSE(func);
     ASSERT_TRUE(func2);
     ASSERT_EQ(func2(4), 8);
     ASSERT_EQ(func2(8), 16);
+    func2 = std::move(func);
+    ASSERT_FALSE(func2);
 }
