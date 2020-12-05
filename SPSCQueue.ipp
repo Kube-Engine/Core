@@ -66,7 +66,7 @@ inline bool kF::Core::SPSCQueue<Type>::pop(Type &value)
 template<typename Type>
 template<bool AllowLess, std::input_iterator InputIterator>
 inline std::size_t kF::Core::SPSCQueue<Type>::pushRangeImpl(const InputIterator from, const InputIterator to)
-    noexcept(nothrow_forward_iterator_constructible(InputIterator))
+    noexcept_forward_iterator_constructible(InputIterator)
 {
     std::size_t toPush = to - from;
     const auto tail = _tail.load(std::memory_order_relaxed);

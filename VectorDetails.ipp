@@ -111,7 +111,7 @@ template<typename Base, typename Type, std::integral Range>
 template<std::input_iterator InputIterator> requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
 inline typename kF::Core::Internal::VectorDetails<Base, Type, Range>::Iterator
     kF::Core::Internal::VectorDetails<Base, Type, Range>::insert(const Iterator pos, const InputIterator from, const InputIterator to)
-    noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+    noexcept(nothrow_forward_iterator_constructible(InputIterator) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     const Range count = std::distance(from, to);
     Range position;

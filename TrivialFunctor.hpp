@@ -9,7 +9,7 @@
 
 namespace kF::Core
 {
-    template<typename Signature, std::size_t DesiredCacheSize = CacheLineEighthSize>
+    template<typename Signature, std::size_t CacheSize = CacheLineEighthSize>
     class TrivialFunctor;
 
     namespace Internal
@@ -18,18 +18,28 @@ namespace kF::Core
         template<typename Functor, std::size_t CacheSize>
         concept TrivialFunctorRequirements =
             std::conjunction_v<std::is_trivial<Functor>, std::bool_constant<sizeof(Functor) <= CacheSize>>;
+
+        /** @brief Ensure that a given functor / function is callable */
+        template<typename Functor, typename Return, typename ...Args>
+        concept TrivialFunctorInvocable = requires(Functor &functor, Args ...args) {
+            static_cast<Return>(functor(args...));
+        } || requires(Functor &functor, Args ...args) {
+            static_cast<Return>((*functor)(args...));
+        };
+
+        /** @brief Ensure that a given member function is callable */
+        template<auto Member, typename ClassType, typename Return, typename ...Args>
+        concept TrivialFunctorMemberInvocable = requires(ClassType *obj, Args ...args) {
+            static_cast<Return>((obj->*Member)(args...));
+        };
     };
 }
 
 /** @brief Very fast opaque functor but only takes trivial types less or equal sized than cacheline eighth */
-template<typename Return, typename ...Args, std::size_t DesiredCacheSize>
-class alignas(kF::Core::Utils::NextPowerOf2(kF::Core::CacheLineEighthSize + DesiredCacheSize))
-        kF::Core::TrivialFunctor<Return(Args...), DesiredCacheSize>
+template<typename Return, typename ...Args, std::size_t CacheSize>
+class alignas_eighth_cacheline kF::Core::TrivialFunctor<Return(Args...), CacheSize>
 {
 public:
-    /** @brief Real cache size */
-    static constexpr std::size_t CacheSize = Utils::NextPowerOf2(CacheLineEighthSize + DesiredCacheSize) - CacheLineEighthSize;
-
     /** @brief Byte cache */
     using Cache = std::array<std::byte, CacheSize>;
 
@@ -52,6 +62,12 @@ public:
     /** @brief Move constructor */
     TrivialFunctor(TrivialFunctor &&other) noexcept = default;
 
+    /** @brief Prepare constructor, limited to runtime functors due to template constructor restrictions */
+    template<typename ClassFunctor>
+        requires (!std::is_same_v<TrivialFunctor, std::remove_cvref_t<ClassFunctor>>) && Internal::TrivialFunctorInvocable<ClassFunctor, Return, Args...>
+    TrivialFunctor(ClassFunctor &&functor) noexcept { prepare(std::forward<ClassFunctor>(functor)); }
+
+
     /** @brief Destructor */
     ~TrivialFunctor(void) noexcept = default;
 
@@ -68,7 +84,8 @@ public:
     /** @brief Prepare a functor */
     template<typename ClassFunctor>
         requires Internal::TrivialFunctorRequirements<ClassFunctor, CacheSize> && std::invocable<ClassFunctor, Args...>
-    void prepare(ClassFunctor functor) noexcept
+            && Internal::TrivialFunctorInvocable<ClassFunctor, Return, Args...>
+    void prepare(ClassFunctor &&functor) noexcept
     {
         _invoke = [](Cache &cache, Args ...args) -> Return {
             return CacheAs<ClassFunctor>(cache)(std::forward<Args>(args)...);
@@ -78,7 +95,7 @@ public:
 
     /** @brief Prepare a volatile member function */
     template<auto MemberFunction, typename ClassType>
-        requires std::invocable<decltype(MemberFunction), ClassType * const, Args...>
+        requires Internal::TrivialFunctorMemberInvocable<MemberFunction, ClassType, Return, Args...>
     void prepare(ClassType * const instance) noexcept
     {
         _invoke = [](Cache &cache, Args ...args) {
@@ -89,7 +106,7 @@ public:
 
     /** @brief Prepare a const member function */
     template<auto MemberFunction, typename ClassType>
-        requires std::invocable<decltype(MemberFunction), const ClassType * const, Args...>
+        requires Internal::TrivialFunctorMemberInvocable<MemberFunction, const ClassType, Return, Args...>
     void prepare(const ClassType * const instance) noexcept
     {
         _invoke = [](Cache &cache, Args ...args) {
@@ -100,7 +117,7 @@ public:
 
     /** @brief Prepare a free function */
     template<auto Function>
-        requires std::invocable<decltype(Function), Args...>
+        requires Internal::TrivialFunctorInvocable<decltype(Function), Return, Args...>
     void prepare(void) noexcept
     {
         _invoke = [](Cache &, Args ...args) -> Return {
@@ -113,11 +130,5 @@ public:
 
 private:
     OpaqueInvoke _invoke { nullptr };
-    Cache _cache
-
-        /** @brief Cast a cache into a given type */;
+    Cache _cache;
 };
-
-static_assert_fit(TEMPLATE_TYPE(kF::Core::TrivialFunctor, void(void), kF::Core::CacheLineEighthSize), kF::Core::CacheLineQuarterSize);
-static_assert_fit(TEMPLATE_TYPE(kF::Core::TrivialFunctor, void(void), kF::Core::CacheLineQuarterSize), kF::Core::CacheLineHalfSize);
-static_assert_fit(TEMPLATE_TYPE(kF::Core::TrivialFunctor, void(void), kF::Core::CacheLineSize), kF::Core::CacheLineDoubleSize);

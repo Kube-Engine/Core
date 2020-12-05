@@ -11,30 +11,40 @@
 
 namespace kF::Core
 {
-    template<typename Signature, std::size_t DesiredCacheSize = CacheLineQuarterSize>
+    template<typename Signature, std::size_t CacheSize = CacheLineQuarterSize>
     class Functor;
 
     namespace Internal
     {
         /** @brief Ensure that a given functor met the trivial requirements of Functor */
         template<typename Functor, std::size_t CacheSize>
-        concept FunctorCacheRequirements =
-            std::conjunction_v<std::is_trivial<Functor>, std::bool_constant<sizeof(Functor) <= CacheSize>>;
+        concept FunctorCacheRequirements = std::is_trivial_v<Functor> && sizeof(Functor) <= CacheSize;
+
+        /** @brief Ensure that a given functor DOES NOT met the trivial requirements of Functor */
+        template<typename Functor, std::size_t CacheSize>
+        concept FunctorNoCacheRequirements = (std::is_trivial_v<Functor> ? sizeof(Functor) > CacheSize : true);
+
+        /** @brief Ensure that a given functor / function is callable */
+        template<typename Functor, typename Return, typename ...Args>
+        concept FunctorInvocable = requires(Functor &functor, Args ...args) {
+            static_cast<Return>(functor(args...));
+        } || requires(Functor &functor, Args ...args) {
+            static_cast<Return>((*functor)(args...));
+        };
+
+        /** @brief Ensure that a given member function is callable */
+        template<auto Member, typename ClassType, typename Return, typename ...Args>
+        concept FunctorMemberInvocable = requires(ClassType *obj, Args ...args) {
+            static_cast<Return>((obj->*Member)(args...));
+        };
     }
 }
 
 /** @brief Very fast opaque functor but only takes trivial types less or equal sized than cacheline eighth */
-template<typename Return, typename ...Args, std::size_t DesiredCacheSize>
-class alignas(kF::Core::Utils::NextPowerOf2(kF::Core::CacheLineQuarterSize + DesiredCacheSize))
-        kF::Core::Functor<Return(Args...), DesiredCacheSize>
+template<typename Return, typename ...Args, std::size_t CacheSize>
+class kF::Core::Functor<Return(Args...), CacheSize>
 {
 public:
-    /** @brief Real cache size */
-    static constexpr std::size_t CacheSize = std::max(
-        Utils::NextPowerOf2(CacheLineQuarterSize + DesiredCacheSize) - CacheLineQuarterSize,
-        CacheLineEighthSize
-    );
-
     /** @brief Byte cache */
     using Cache = std::array<std::byte, CacheSize>;
 
@@ -62,8 +72,14 @@ public:
         other._destruct = nullptr;
     }
 
+    /** @brief Prepare constructor, limited to runtime functors due to template constructor restrictions */
+    template<typename ClassFunctor>
+        requires (!std::is_same_v<Functor, std::remove_cvref_t<ClassFunctor>>) && Internal::FunctorInvocable<ClassFunctor, Return, Args...>
+    Functor(ClassFunctor &&functor) noexcept_forward_constructible(decltype(functor))
+        { prepare(std::forward<ClassFunctor>(functor)); }
+
     /** @brief Destructor */
-    ~Functor(void) noexcept { destroy(); }
+    ~Functor(void) { destroy(); }
 
     /** @brief Move assignment*/
     Functor &operator=(Functor &&other) noexcept
@@ -88,8 +104,8 @@ public:
 
     /** @brief Prepare a trivial functor */
     template<typename ClassFunctor>
-        requires Internal::FunctorCacheRequirements<ClassFunctor, CacheSize> && std::invocable<ClassFunctor, Args...>
-    void prepare(ClassFunctor functor) noexcept
+        requires Internal::FunctorCacheRequirements<ClassFunctor, CacheSize> && Internal::FunctorInvocable<ClassFunctor, Return, Args...>
+    void prepare(ClassFunctor &&functor) noexcept
     {
         destroy();
         _invoke = [](Cache &cache, Args ...args) -> Return {
@@ -101,25 +117,28 @@ public:
 
     /** @brief Prepare a non-trivial functor */
     template<typename ClassFunctor>
-    void prepare(ClassFunctor functor) noexcept
+        requires Internal::FunctorNoCacheRequirements<ClassFunctor, CacheSize> && Internal::FunctorInvocable<ClassFunctor, Return, Args...>
+    void prepare(ClassFunctor &&functor) noexcept_forward_constructible(decltype(functor))
     {
-        using ClassFunctorPtr = std::unique_ptr<ClassFunctor>;
+        using FlatClassFunctor = std::remove_cvref_t<ClassFunctor>;
+        using ClassFunctorPtr = FlatClassFunctor *;
 
         destroy();
         _invoke = [](Cache &cache, Args ...args) -> Return {
-            return (*CacheAs<ClassFunctorPtr>(cache))(std::forward<Args>(args)...);
+            if constexpr (std::is_same_v<Return, void>)
+                (*CacheAs<ClassFunctorPtr>(cache))(std::forward<Args>(args)...);
+            else
+                return (*CacheAs<ClassFunctorPtr>(cache))(std::forward<Args>(args)...);
         };
         _destruct = [](Cache &cache) {
-            CacheAs<ClassFunctorPtr>(cache).~ClassFunctorPtr();
+            delete CacheAs<ClassFunctorPtr>(cache);
         };
-        new (&_cache) ClassFunctorPtr(
-            std::make_unique<ClassFunctor>(std::forward<ClassFunctor>(functor))
-        );
+        CacheAs<ClassFunctorPtr>(_cache) = new FlatClassFunctor(std::forward<ClassFunctor>(functor));
     }
 
     /** @brief Prepare a volatile member function */
     template<auto MemberFunction, typename ClassType>
-        requires std::invocable<decltype(MemberFunction), ClassType * const, Args...>
+        requires Internal::FunctorMemberInvocable<MemberFunction, ClassType, Return, Args...>
     void prepare(ClassType * const instance) noexcept
     {
         destroy();
@@ -132,7 +151,7 @@ public:
 
     /** @brief Prepare a const member function */
     template<auto MemberFunction, typename ClassType>
-        requires std::invocable<decltype(MemberFunction), const ClassType * const, Args...>
+        requires Internal::FunctorMemberInvocable<MemberFunction, const ClassType, Return, Args...>
     void prepare(const ClassType * const instance) noexcept
     {
         destroy();
@@ -145,7 +164,7 @@ public:
 
     /** @brief Prepare a free function */
     template<auto Function>
-        requires std::invocable<decltype(Function), Args...>
+        requires Internal::FunctorInvocable<decltype(Function), Return, Args...>
     void prepare(void) noexcept
     {
         destroy();
@@ -170,8 +189,3 @@ private:
             _destruct(_cache);
     }
 };
-
-static_assert_fit(TEMPLATE_TYPE(kF::Core::Functor, void(void), kF::Core::CacheLineEighthSize), kF::Core::CacheLineHalfSize);
-static_assert_fit(TEMPLATE_TYPE(kF::Core::Functor, void(void), kF::Core::CacheLineQuarterSize), kF::Core::CacheLineHalfSize);
-static_assert_fit(TEMPLATE_TYPE(kF::Core::Functor, void(void), kF::Core::CacheLineHalfSize), kF::Core::CacheLineSize);
-static_assert_fit(TEMPLATE_TYPE(kF::Core::Functor, void(void), kF::Core::CacheLineSize), kF::Core::CacheLineDoubleSize);

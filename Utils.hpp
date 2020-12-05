@@ -20,10 +20,20 @@
 #define nothrow_constructible(Type, ...) std::is_nothrow_constructible_v<Type __VA_OPT__(,) __VA_ARGS__>
 #define nothrow_copy_constructible(Type) std::is_nothrow_copy_constructible_v<Type>
 #define nothrow_move_constructible(Type) std::is_nothrow_move_constructible_v<Type>
-#define nothrow_forward_constructible(Type) (std::is_move_constructible_v<Type> ? nothrow_move_constructible(Type) : nothrow_copy_constructible(Type))
+#define nothrow_forward_constructible(Type) ( \
+    std::is_lvalue_reference_v<Type> ? nothrow_copy_constructible(std::remove_cvref_t<Type>) : \
+    std::is_rvalue_reference_v<Type> ? nothrow_move_constructible(std::remove_cvref_t<Type>) : \
+    std::is_move_constructible_v<std::remove_cvref_t<Type>> ? \
+        nothrow_move_constructible(std::remove_cvref_t<Type>) : nothrow_copy_constructible(std::remove_cvref_t<Type>) \
+    )
 #define nothrow_copy_assignable(Type) std::is_nothrow_copy_assignable_v<Type>
 #define nothrow_move_assignable(Type) std::is_nothrow_move_assignable_v<Type>
-#define nothrow_forward_assignable(Type) (std::is_move_assignable_v<Type> ? nothrow_move_assignable(Type) : nothrow_copy_assignable(Type))
+#define nothrow_forward_assignable(Type) ( \
+    std::is_lvalue_reference_v<Type> ? nothrow_copy_assignable(std::remove_cvref_t<Type>) : \
+    std::is_rvalue_reference_v<Type> ? nothrow_move_assignable(std::remove_cvref_t<Type>) : \
+    std::is_move_assignable_v<std::remove_cvref_t<Type>> ? \
+        nothrow_move_assignable(std::remove_cvref_t<Type>) : nothrow_copy_assignable(std::remove_cvref_t<Type>) \
+    )
 #define nothrow_destructible(Type) std::is_nothrow_destructible_v<Type>
 #define nothrow_invocable(Function, ...) std::is_nothrow_invocable_v<Function __VA_OPT__(,) __VA_ARGS__>
 #define nothrow_forward_iterator_constructible(Type) (kF::Core::Utils::IsMoveIterator<Type>::Value ? nothrow_move_constructible(Type) : nothrow_copy_constructible(Type))
@@ -40,6 +50,7 @@
 #define noexcept_forward_assignable(Type) noexcept(nothrow_forward_assignable(Type))
 #define noexcept_destructible(Type) noexcept(nothrow_destructible(Type))
 #define noexcept_invocable(Function, ...) noexcept(nothrow_invocable(Function __VA_OPT__(,) __VA_ARGS__))
+#define noexcept_forward_iterator_constructible(Type) noexcept(nothrow_forward_iterator_constructible(Type))
 #define noexcept_convertible(From, To) noexcept(nothrow_convertible(From, To))
 #define noexcept_expr(Expression) noexcept(nothrow_expr(Expression))
 

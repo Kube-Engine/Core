@@ -66,7 +66,7 @@ public:
      *  @return Success on true */
     template<std::input_iterator InputIterator>
     [[nodiscard]] bool tryPushRange(const InputIterator from, const InputIterator to)
-        noexcept_forward_constructible(Type)
+        noexcept_forward_iterator_constructible(InputIterator)
         { return pushRangeImpl<false>(from, to); }
 
     /** @brief Pop exactly 'count' elements from the queue
@@ -110,7 +110,7 @@ private:
 
     template<bool AllowLess, std::input_iterator InputIterator>
     [[nodiscard]] std::size_t pushRangeImpl(const InputIterator from, const InputIterator to)
-        noexcept(nothrow_forward_iterator_constructible(InputIterator));
+        noexcept_forward_iterator_constructible(InputIterator);
 
     template<bool AllowLess, typename OutputIterator> requires std::output_iterator<OutputIterator, Type>
     [[nodiscard]] std::size_t popRangeImpl(const OutputIterator from, const OutputIterator to)

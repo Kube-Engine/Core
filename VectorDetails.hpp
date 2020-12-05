@@ -68,7 +68,7 @@ public:
     /** @brief Insert constructor */
     template<std::input_iterator InputIterator>
     VectorDetails(const InputIterator from, const InputIterator to)
-        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+        noexcept(nothrow_forward_iterator_constructible(InputIterator) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
         { resize(from, to); }
 
     /** @brief Initializer list constructor */
@@ -143,7 +143,7 @@ public:
     /** @brief Insert a range of element by iterating over iterators */
     template<std::input_iterator InputIterator> requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
     Iterator insert(const Iterator pos, const InputIterator from, const InputIterator to)
-        noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
+        noexcept(nothrow_forward_iterator_constructible(InputIterator) && nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
 
     /** @brief Remove a range of elements */

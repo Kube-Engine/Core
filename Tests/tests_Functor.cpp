@@ -56,8 +56,7 @@ TEST(Functor, MemberBasics)
 TEST(Functor, TrivialFunctorBasics)
 {
     int y = 1;
-    Core::Functor<int(int)> func;
-    func.prepare([&y](const int x) {
+    Core::Functor<int(int)> func([&y](const int x) {
         return x * y;
     });
     ++y;
@@ -75,9 +74,7 @@ TEST(Functor, TrivialFunctorBasics)
 
 TEST(Functor, NonTrivialClassFunctorBasics)
 {
-    Core::Functor<int(int)> func;
-
-    func.prepare([y = std::make_unique<int>(2)](const int x) {
+    Core::Functor<int(int)> func([y = std::make_unique<int>(2)](const int x) {
         return x * *y;
     });
     ASSERT_TRUE(func);
@@ -90,4 +87,15 @@ TEST(Functor, NonTrivialClassFunctorBasics)
     ASSERT_EQ(func2(8), 16);
     func2 = std::move(func);
     ASSERT_FALSE(func2);
+}
+
+TEST(Functor, SneakyErrors)
+{
+    bool trigger = false;
+
+    Core::Functor<void(void)> func([&trigger] { trigger = true; });
+
+    ASSERT_FALSE(trigger);
+    func();
+    ASSERT_TRUE(trigger);
 }

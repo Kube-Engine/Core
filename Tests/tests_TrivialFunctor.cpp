@@ -57,11 +57,10 @@ TEST(TrivialFunctor, MemberBasics)
     ASSERT_EQ(func2(8), 16);
 }
 
-TEST(TrivialFunctor, LambdaBasics)
+TEST(TrivialFunctor, TrivialClassFunctorBasics)
 {
     int y = 1;
-    Core::TrivialFunctor<int(int)> func;
-    func.prepare([&y](const int x) {
+    Core::TrivialFunctor<int(int)> func([&y](const int x) {
         return x * y;
     });
     ++y;
