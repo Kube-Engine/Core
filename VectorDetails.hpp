@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <memory>
 
+#include "Assert.hpp"
 #include "Utils.hpp"
 
 namespace kF::Core::Internal

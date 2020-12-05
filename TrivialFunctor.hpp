@@ -21,17 +21,11 @@ namespace kF::Core
 
         /** @brief Ensure that a given functor / function is callable */
         template<typename Functor, typename Return, typename ...Args>
-        concept TrivialFunctorInvocable = requires(Functor &functor, Args ...args) {
-            static_cast<Return>(functor(args...));
-        } || requires(Functor &functor, Args ...args) {
-            static_cast<Return>((*functor)(args...));
-        };
+        concept TrivialFunctorInvocable = std::is_invocable_r_v<Return, Functor, Args...>;
 
         /** @brief Ensure that a given member function is callable */
         template<auto Member, typename ClassType, typename Return, typename ...Args>
-        concept TrivialFunctorMemberInvocable = requires(ClassType *obj, Args ...args) {
-            static_cast<Return>((obj->*Member)(args...));
-        };
+        concept TrivialFunctorMemberInvocable = std::is_invocable_r_v<Return, decltype(Member), ClassType &, Args...>;
     };
 }
 
@@ -83,7 +77,7 @@ public:
 
     /** @brief Prepare a functor */
     template<typename ClassFunctor>
-        requires Internal::TrivialFunctorRequirements<ClassFunctor, CacheSize> && std::invocable<ClassFunctor, Args...>
+        requires Internal::TrivialFunctorRequirements<ClassFunctor, CacheSize>
             && Internal::TrivialFunctorInvocable<ClassFunctor, Return, Args...>
     void prepare(ClassFunctor &&functor) noexcept
     {

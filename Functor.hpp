@@ -26,17 +26,11 @@ namespace kF::Core
 
         /** @brief Ensure that a given functor / function is callable */
         template<typename Functor, typename Return, typename ...Args>
-        concept FunctorInvocable = requires(Functor &functor, Args ...args) {
-            static_cast<Return>(functor(args...));
-        } || requires(Functor &functor, Args ...args) {
-            static_cast<Return>((*functor)(args...));
-        };
+        concept FunctorInvocable = std::is_invocable_r_v<Return, Functor, Args...>;
 
         /** @brief Ensure that a given member function is callable */
         template<auto Member, typename ClassType, typename Return, typename ...Args>
-        concept FunctorMemberInvocable = requires(ClassType *obj, Args ...args) {
-            static_cast<Return>((obj->*Member)(args...));
-        };
+        concept FunctorMemberInvocable = std::is_invocable_r_v<Return, decltype(Member), ClassType &, Args...>;
     }
 }
 

@@ -104,6 +104,7 @@ public:
     [[nodiscard]] std::basic_string_view<Type> toStdString(void) const noexcept { return std::basic_string_view<Type>(data(), size()); }
 
 private:
+    /** @brief Strlen but with null cstring check */
     [[nodiscard]] static std::size_t SafeStrlen(const char * const cstring) noexcept
     {
         if (!cstring) [[unlikely]]
