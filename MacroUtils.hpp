@@ -5,6 +5,9 @@
 
 #pragma once
 
+// Stringify
+#define _STRINGIFY(arg) #arg
+
 // Concatenate arguments
 #define _CONCATENATE(arg1, arg2) _CONCATENATE1(arg1, arg2) // Call the _CONCATENATE1 to expend potential macro arguments
 #define _CONCATENATE1(arg1, arg2) arg1##arg2
