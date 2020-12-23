@@ -47,7 +47,7 @@ TEST(SPSCQueue, RangePushPop)
             ASSERT_EQ(c, ref);
     };
 
-    constexpr std::size_t maxQueueSize = 4096;
+    constexpr std::size_t maxQueueSize = KUBE_DEBUG_BUILD ? 64 : 4096;
 
     for (auto queueSize = 1ul; queueSize < maxQueueSize; queueSize *= 2) {
         std::vector<char> tmp(queueSize);

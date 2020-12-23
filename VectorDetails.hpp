@@ -13,11 +13,11 @@
 
 namespace kF::Core::Internal
 {
-    template<typename Base, typename Type, std::integral Range>
+    template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized = false>
     class VectorDetails;
 }
 
-template<typename Base, typename Type, std::integral Range>
+template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 class kF::Core::Internal::VectorDetails : public Base
 {
 public:
@@ -73,7 +73,7 @@ public:
         { resize(from, to); }
 
     /** @brief Initializer list constructor */
-    VectorDetails(std::initializer_list<Type> init) noexcept_forward_constructible(Type)
+    VectorDetails(std::initializer_list<Type> &&init) noexcept_forward_constructible(Type)
         : VectorDetails(init.begin(), init.end()) {}
 
     /** @brief Release the vector */

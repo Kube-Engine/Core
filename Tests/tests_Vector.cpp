@@ -7,11 +7,12 @@
 
 #include <Kube/Core/Vector.hpp>
 #include <Kube/Core/FlatVector.hpp>
+#include <Kube/Core/SmallVector.hpp>
 
-#define GENERATE_VECTOR_TESTS(Vector) \
+#define GENERATE_VECTOR_TESTS(Vector, ...) \
 TEST(Vector, Basics) \
 { \
-    Vector<std::size_t> vector(0); \
+    Vector<std::size_t __VA_OPT__(,) __VA_ARGS__> vector(0); \
     ASSERT_EQ(vector.size(), 0); \
     ASSERT_EQ(vector.capacity(), 0); \
 } \
@@ -19,7 +20,7 @@ TEST(Vector, Basics) \
 TEST(Vector, Push) \
 { \
     constexpr auto count = 42ul; \
-    Vector<std::size_t> vector; \
+    Vector<std::size_t __VA_OPT__(,) __VA_ARGS__> vector; \
  \
     ASSERT_FALSE(vector); \
     for (auto i = 0ul; i < count; ++i) { \
@@ -51,7 +52,7 @@ TEST(Vector, Push) \
 TEST(Vector, Pop) \
 { \
     constexpr auto count = 42ul; \
-    Vector<std::size_t> vector(count, 0ul); \
+    Vector<std::size_t __VA_OPT__(,) __VA_ARGS__> vector(count, 0ul); \
  \
     ASSERT_TRUE(vector); \
     ASSERT_EQ(vector.size(), count); \
@@ -64,7 +65,7 @@ TEST(Vector, Pop) \
  \
 TEST(Vector, NullResize) \
 { \
-    Vector<int> vector(0); \
+    Vector<int __VA_OPT__(,) __VA_ARGS__> vector(0); \
     ASSERT_EQ(vector.size(), 0); \
     ASSERT_EQ(vector.capacity(), 0); \
     vector.resize(0, 0); \
@@ -78,7 +79,7 @@ TEST(Vector, Resize) \
     constexpr auto str2 = "Hello"; \
     constexpr auto count = 4ul; \
  \
-    Vector<std::string> vector(count, str); \
+    Vector<std::string __VA_OPT__(,) __VA_ARGS__> vector(count, str); \
     ASSERT_EQ(vector.size(), count); \
     ASSERT_EQ(vector.capacity(), count); \
     auto i = 0ul; \
@@ -110,7 +111,7 @@ TEST(Vector, Reserve) \
     constexpr auto str = "Vector is an amazing 8 bytes vector !"; \
     constexpr auto count = 4ul; \
  \
-    Vector<std::string> vector; \
+    Vector<std::string __VA_OPT__(,) __VA_ARGS__> vector; \
  \
     vector.reserve(count); \
     ASSERT_EQ(vector.size(), 0); \
@@ -127,7 +128,7 @@ TEST(Vector, InsertIterators) \
 { \
     std::vector<int> tmp(10, 42); \
     std::vector<int> tmp2(5, 32); \
-    Vector<int> vector(tmp.begin(), tmp.end()); \
+    Vector<int __VA_OPT__(,) __VA_ARGS__> vector(tmp.begin(), tmp.end()); \
  \
     ASSERT_EQ(vector.size(), 10ul); \
     for (auto elem : vector) \
@@ -142,7 +143,7 @@ TEST(Vector, InsertIterators) \
  \
 TEST(Vector, InsertFill) \
 { \
-    Vector<int> vector; \
+    Vector<int __VA_OPT__(,) __VA_ARGS__> vector; \
  \
     vector.insert(vector.begin(), 2, 42); \
     ASSERT_EQ(vector.size(), 2); \
@@ -162,7 +163,7 @@ TEST(Vector, Clear) \
     constexpr auto count = 42; \
     constexpr auto value1 = 24; \
     constexpr auto value2 = 42; \
-    Vector<int> vector(count, value1); \
+    Vector<int __VA_OPT__(,) __VA_ARGS__> vector(count, value1); \
     auto *data = vector.data(); \
     for (auto i = 0u; i < count; ++i) \
         ASSERT_EQ(data[i], value1); \
@@ -180,7 +181,7 @@ TEST(Vector, Erase) \
     constexpr auto count = 10ul; \
  \
     constexpr auto Get = [](const std::size_t count) { \
-        Vector<int> vector(count); \
+        Vector<int __VA_OPT__(,) __VA_ARGS__> vector(count); \
         for (auto i = 0u; i < count; ++i) \
             vector[i] = i; \
         return vector; \
@@ -211,3 +212,43 @@ using namespace kF::Core;
 
 GENERATE_VECTOR_TESTS(Vector)
 GENERATE_VECTOR_TESTS(FlatVector)
+GENERATE_VECTOR_TESTS(SmallVector, 4)
+
+TEST(SmallVector, SmallOptimizationInsertRange)
+{
+    std::unique_ptr<int> data[] = {
+        std::make_unique<int>(0), std::make_unique<int>(1),
+        std::make_unique<int>(2), std::make_unique<int>(3)
+    };
+    SmallVector<std::unique_ptr<int>, 4> vector(
+        std::make_move_iterator(std::begin(data)),
+        std::make_move_iterator(std::end(data))
+    );
+
+    ASSERT_TRUE(vector.isCacheUsed());
+    for (auto i = 0; i < 4; ++i)
+        ASSERT_EQ(*vector.at(i), i);
+
+    vector.push(std::make_unique<int>(4));
+    ASSERT_FALSE(vector.isCacheUsed());
+    for (auto i = 0; i < 5; ++i)
+        ASSERT_EQ(*vector.at(i), i);
+}
+
+TEST(SmallVector, SmallOptimizationPush)
+{
+    constexpr auto PushTest = [](auto &vector, const int value, const bool isCacheUsed) {
+        vector.push(std::make_unique<int>(value));
+        ASSERT_EQ(vector.isCacheUsed(), isCacheUsed);
+        for (auto i = 0; i <= value; ++i)
+            ASSERT_EQ(*vector.at(i), i);
+    };
+    SmallVector<std::unique_ptr<int>, 4> vector;
+
+    PushTest(vector, 0, true);
+    PushTest(vector, 1, true);
+    PushTest(vector, 2, true);
+    PushTest(vector, 3, true);
+
+    PushTest(vector, 4, false);
+}

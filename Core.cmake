@@ -21,6 +21,9 @@ set(KubeCoreSources
     ${KubeCoreDir}/FlatString.ipp
     ${KubeCoreDir}/VectorDetails.hpp
     ${KubeCoreDir}/Vector.hpp
+    ${KubeCoreDir}/Vector.ipp
+    ${KubeCoreDir}/SmallVector.hpp
+    ${KubeCoreDir}/SmallVector.ipp
     ${KubeCoreDir}/TrivialFunctor.hpp
     ${KubeCoreDir}/Functor.hpp
     ${KubeCoreDir}/DispatcherDetails.hpp
