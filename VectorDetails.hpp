@@ -43,6 +43,7 @@ public:
     using Base::allocate;
     using Base::deallocate;
     using Base::empty;
+    using Base::steal;
     using Base::swap;
 
     /** @brief Default constructor */
@@ -53,7 +54,7 @@ public:
         { resize(other.begin(), other.end()); }
 
     /** @brief Move constructor */
-    VectorDetails(VectorDetails &&other) noexcept { swap(other); }
+    VectorDetails(VectorDetails &&other) noexcept { steal(other); }
 
     /** @brief Resize with default constructor */
     VectorDetails(const Range count)
@@ -85,7 +86,7 @@ public:
         { resize(other.begin(), other.end()); return *this; }
 
     /** @brief Move assignment */
-    VectorDetails &operator=(VectorDetails &&other) noexcept { swap(other); return *this; }
+    VectorDetails &operator=(VectorDetails &&other) noexcept { steal(other); return *this; }
 
     /** @brief Fast non-empty check */
     [[nodiscard]] operator bool(void) const noexcept { return !empty(); }

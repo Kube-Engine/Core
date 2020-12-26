@@ -49,8 +49,9 @@ public:
 
 
     /** @brief Get internal data pointer */
-    [[nodiscard]] Type *data(void) noexcept { return _ptr ? dataUnsafe() : nullptr; }
-    [[nodiscard]] const Type *data(void) const noexcept { return _ptr ? dataUnsafe() : nullptr; }
+    [[nodiscard]] Type *data(void) noexcept
+        { return const_cast<Type *>(const_cast<const FlatVectorBase *>(this)->data()); }
+    [[nodiscard]] const Type *data(void) const noexcept;
     [[nodiscard]] Type *dataUnsafe(void) noexcept { return reinterpret_cast<Type *>(_ptr + 1); }
     [[nodiscard]] const Type *dataUnsafe(void) const noexcept { return reinterpret_cast<const Type *>(_ptr + 1); }
 
@@ -69,6 +70,9 @@ public:
     [[nodiscard]] ConstIterator begin(void) const noexcept { return _ptr ? beginUnsafe() : ConstIterator(); }
     [[nodiscard]] ConstIterator end(void) const noexcept { return _ptr ? endUnsafe() : ConstIterator(); }
 
+
+    /** @brief Steal another instance */
+    void steal(FlatVectorBase &other) noexcept;
 
     /** @brief Swap two instances */
     void swap(FlatVectorBase &other) noexcept { std::swap(_ptr, other._ptr); }
@@ -105,3 +109,5 @@ protected:
 private:
     Header *_ptr { nullptr };
 };
+
+#include "FlatVector.ipp"

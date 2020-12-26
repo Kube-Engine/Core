@@ -55,6 +55,8 @@ public:
     [[nodiscard]] ConstIterator begin(void) const noexcept { return beginUnsafe(); }
     [[nodiscard]] ConstIterator end(void) const noexcept { return endUnsafe(); }
 
+    /** @brief Steal another instance */
+    void steal(VectorBase &other) noexcept;
 
     /** @brief Swap two instances */
     void swap(VectorBase &other) noexcept;

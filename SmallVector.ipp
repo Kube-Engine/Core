@@ -7,7 +7,21 @@ template<typename Type, std::size_t OptimizedCapacity, std::integral Range>
 inline void kF::Core::Internal::SmallVectorBase<Type, OptimizedCapacity, Range>::steal(SmallVectorBase &other)
     noexcept_forward_constructible(Type)
 {
-    // TODO: Implement
+    if (_data) {
+        std::destroy(beginUnsafe(), endUnsafe());
+        deallocate(_data);
+    }
+    if (other.isCacheUsed()) {
+        std::uninitialized_move(other.beginUnsafe(), other.endUnsafe(), optimizedData());
+        _data = optimizedData();
+    } else {
+        _data = other._data;
+    }
+    _size = other._size;
+    _capacity = other._capacity;
+    other._data = nullptr;
+    other._size = Range {};
+    other._capacity = Range {};
 }
 
 template<typename Type, std::size_t OptimizedCapacity, std::integral Range>

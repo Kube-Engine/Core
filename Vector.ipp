@@ -4,6 +4,21 @@
  */
 
 template<typename Type, std::integral Range>
+inline void kF::Core::Internal::VectorBase<Type, Range>::steal(VectorBase &other) noexcept
+{
+    if (_data) {
+        std::destroy(beginUnsafe(), endUnsafe());
+        deallocate(_data);
+    }
+    _data = other._data;
+    _size = other._size;
+    _capacity = other._capacity;
+    other._data = nullptr;
+    other._size = Range{};
+    other._capacity = Range{};
+}
+
+template<typename Type, std::integral Range>
 inline void kF::Core::Internal::VectorBase<Type, Range>::swap(VectorBase &other) noexcept
 {
     std::swap(_data, other._data);
