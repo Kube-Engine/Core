@@ -17,6 +17,25 @@ TEST(Vector, Basics) \
     ASSERT_EQ(vector.capacity(), 0); \
 } \
  \
+TEST(Vector, Semantics) \
+{ \
+    for (auto i = 1; i < 15; ++i) { \
+        Vector<std::string __VA_OPT__(,) __VA_ARGS__> vector(i, "Hello World 123456789"); \
+        auto copy1(vector); \
+        auto copy2 = copy1; \
+        auto tmp1 = copy2; \
+        auto tmp2 = tmp1; \
+        auto move1(std::move(tmp1)); \
+        auto move2 = std::move(tmp2); \
+        ASSERT_EQ(vector, copy1); \
+        ASSERT_EQ(vector, copy2); \
+        ASSERT_EQ(vector, move1); \
+        ASSERT_EQ(vector, move2); \
+        ASSERT_NE(vector, tmp1); \
+        ASSERT_NE(vector, tmp2); \
+    } \
+} \
+ \
 TEST(Vector, Push) \
 { \
     constexpr auto count = 42ul; \
@@ -206,6 +225,24 @@ TEST(Vector, Erase) \
         vector.erase(vector.begin()); \
         ASSERT_EQ(vector.size(), 0); \
     } \
+} \
+ \
+TEST(Vector, Find) \
+{ \
+    constexpr auto count = 42ul; \
+    Vector<std::size_t __VA_OPT__(,) __VA_ARGS__> vector; \
+ \
+    ASSERT_FALSE(vector); \
+    for (auto i = 0ul; i < count; ++i) { \
+        vector.push(i); \
+    } \
+    ASSERT_EQ(vector.find(0), vector.begin()); \
+    ASSERT_EQ(vector.find(41), vector.end() - 1); \
+    ASSERT_EQ(vector.find(42), vector.end()); \
+    ASSERT_EQ(vector.find([](std::size_t x) { return x == 15; }), vector.begin() + 15); \
+    ASSERT_EQ(vector.find([](const std::size_t x) { return x == 15; }), vector.begin() + 15); \
+    ASSERT_EQ(vector.find([](const std::size_t &x) { return x == 15; }), vector.begin() + 15); \
+    ASSERT_EQ(vector.find([](std::size_t &x) { return ++x == 42; }), vector.end() - 1); \
 }
 
 using namespace kF::Core;

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <initializer_list>
 #include <memory>
 
@@ -189,6 +190,35 @@ public:
      *  The data is either preserved or moved
      *  @return True if the reserve happened and the data has been moved */
     bool reserve(const Range capacity) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
+
+
+    /** @brief Comparison operators */
+    [[nodiscard]] bool operator==(const VectorDetails &other) const noexcept
+        requires std::equality_comparable<Type>
+        { return size() == other.size() && std::equal(begin(), end(), other.begin()); }
+    [[nodiscard]] bool operator!=(const VectorDetails &other) const noexcept
+        requires std::equality_comparable<Type>
+        { return !operator==(other); }
+
+    /** @brief Find an element by comparison */
+    template<typename Comparable>
+        requires std::equality_comparable_with<Comparable, Type>
+    [[nodiscard]] Iterator find(const Comparable &comparable) noexcept
+        { return std::find(begin(), end(), comparable); }
+    template<typename Comparable>
+        requires std::equality_comparable_with<Comparable, Type>
+    [[nodiscard]] ConstIterator find(const Comparable &comparable) const noexcept
+        { return std::find(begin(), end(), comparable); }
+
+    /** @brief Find an element with functor */
+    template<typename Functor>
+        requires std::invocable<Functor, Type &>
+    [[nodiscard]] Iterator find(Functor &&functor) noexcept
+        { return std::find_if(begin(), end(), std::forward<Functor>(functor)); }
+    template<typename Functor>
+        requires std::invocable<Functor, const Type &>
+    [[nodiscard]] ConstIterator find(Functor &&functor) const noexcept
+        { return std::find_if(begin(), end(), std::forward<Functor>(functor)); }
 
 
     /** @brief Grow internal buffer of a given minimum */

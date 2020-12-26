@@ -56,8 +56,11 @@ public:
     [[nodiscard]] ConstIterator end(void) const noexcept { return endUnsafe(); }
 
 
+    /** @brief Steal another instance */
+    void steal(SmallVectorBase &other) noexcept_forward_constructible(Type);
+
     /** @brief Swap two instances */
-    void swap(SmallVectorBase &other) noexcept;
+    void swap(SmallVectorBase &other) noexcept_forward_assignable(Type);
 
 
     /** @brief Tell if the vector currently use its cache or a heap allocation*/
