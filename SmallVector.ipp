@@ -7,6 +7,7 @@ template<typename Type, std::size_t OptimizedCapacity, std::integral Range>
 inline void kF::Core::Internal::SmallVectorBase<Type, OptimizedCapacity, Range>::steal(SmallVectorBase &other)
     noexcept_forward_constructible(Type)
 {
+    // TODO: Implement
 }
 
 template<typename Type, std::size_t OptimizedCapacity, std::integral Range>
