@@ -17,7 +17,7 @@ inline void kF::Core::Internal::FlatVectorBase<Type, Range>::steal(FlatVectorBas
 {
     if (_ptr) {
         std::destroy(beginUnsafe(), endUnsafe());
-        deallocate(_ptr);
+        deallocate(dataUnsafe());
     }
     _ptr = other._ptr;
     other._ptr = nullptr;
