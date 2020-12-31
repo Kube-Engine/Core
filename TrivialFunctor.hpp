@@ -17,7 +17,7 @@ namespace kF::Core
         /** @brief Ensure that a given functor met the trivial requirements of TrivialFunctor */
         template<typename Functor, std::size_t CacheSize>
         concept TrivialFunctorRequirements =
-            std::conjunction_v<std::is_trivial<Functor>, std::bool_constant<sizeof(Functor) <= CacheSize>>;
+            std::conjunction_v<std::is_trivially_copy_constructible<Functor>, std::bool_constant<sizeof(Functor) <= CacheSize>>;
 
         /** @brief Ensure that a given functor / function is callable */
         template<typename Functor, typename Return, typename ...Args>

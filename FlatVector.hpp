@@ -100,7 +100,7 @@ protected:
 
     /** @brief Allocates a new buffer */
     [[nodiscard]] Type *allocate(const Range capacity) noexcept
-        { return reinterpret_cast<Type *>(reinterpret_cast<Header *>(Utils::AlignedAlloc<alignof(Header)>(sizeof(Header) + sizeof(Type) * capacity)) + 1); }
+        { return reinterpret_cast<Type *>(Utils::AlignedAlloc<alignof(Header), Header>(sizeof(Header) + sizeof(Type) * capacity) + 1); }
 
     /** @brief Deallocates a buffer */
     void deallocate(Type *data) noexcept

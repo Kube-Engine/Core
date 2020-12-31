@@ -5,6 +5,8 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include <Kube/Core/Vector.hpp>
 #include <Kube/Core/FlatVector.hpp>
 #include <Kube/Core/SmallVector.hpp>
@@ -153,11 +155,34 @@ TEST(Vector, InsertIterators) \
     for (auto elem : vector) \
         ASSERT_EQ(elem, 42); \
     vector.insert(vector.begin() + 1, tmp2.begin(), tmp2.end()); \
-    for (auto i = 0ul; i < 5; ++i) \
+    ASSERT_EQ(vector[0], 42); \
+    for (auto i = 0ul; i < 5ul; ++i) \
         ASSERT_EQ(vector[1 + i], 32); \
+    for (auto i = 0ul; i < 9; ++i) \
+        ASSERT_EQ(vector[6 + i], 42); \
     vector.insert(vector.end(), { 45, 46 }); \
     ASSERT_EQ(vector.at(vector.size() - 2), 45); \
     ASSERT_EQ(vector.back(), 46); \
+} \
+TEST(Vector, InsertMap) \
+{ \
+    std::vector<std::string> tmp(10, "42"); \
+    std::vector<std::string> tmp2(5, "32"); \
+    Vector<int __VA_OPT__(,) __VA_ARGS__> vector(tmp.begin(), tmp.end(), [](const auto &str) { \
+        return std::stoi(str); \
+    }); \
+ \
+    ASSERT_EQ(vector.size(), 10ul); \
+    for (auto elem : vector) \
+        ASSERT_EQ(elem, 42); \
+    vector.insert(vector.begin() + 1, tmp2.begin(), tmp2.end(), [](const auto &str) { \
+        return std::stoi(str); \
+    }); \
+    ASSERT_EQ(vector[0], 42); \
+    for (auto i = 0ul; i < 5ul; ++i) \
+        ASSERT_EQ(vector[1 + i], 32); \
+    for (auto i = 0ul; i < 9; ++i) \
+        ASSERT_EQ(vector[6 + i], 42); \
 } \
  \
 TEST(Vector, InsertFill) \

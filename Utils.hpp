@@ -109,8 +109,8 @@ namespace kF::Core
     namespace Utils
     {
         /** @brief Forwards to std::aligned_alloc, but ensure arguments */
-        template<std::size_t RequiredAlignment>
-        [[nodiscard]] void *AlignedAlloc(const std::size_t bytes) noexcept;
+        template<std::size_t RequiredAlignment, typename Cast = void>
+        [[nodiscard]] Cast *AlignedAlloc(const std::size_t bytes) noexcept;
 
         /** @brief Helper to know if a given type is a std::move_iterator */
         template<typename Type>
