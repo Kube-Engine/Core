@@ -58,7 +58,7 @@ public:
 
     /** @brief Resize with default constructor */
     VectorDetails(const Range count)
-        noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
+        noexcept(nothrow_default_constructible(Type) && nothrow_destructible(Type))
         { resize(count); }
 
     /** @brief Resize with copy constructor */
@@ -125,31 +125,39 @@ public:
 
 
     /** @brief Push an element into the vector */
-    template<typename ...Args>
+    template<typename ...Args> requires std::constructible_from<Type, Args...>
     Type &push(Args &&...args)
-        noexcept(std::is_nothrow_constructible_v<Type, Args...> && nothrow_destructible(Type))
-        requires std::constructible_from<Type, Args...>;
+        noexcept(nothrow_constructible(Type, Args...) && nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
     /** @brief Pop the last element of the vector */
     void pop(void) noexcept_destructible(Type);
 
+
+    /** @brief Insert a range of copies */
+    Iterator insertDefault(Iterator pos, const Range count)
+        noexcept(nothrow_default_constructible(Type) && nothrow_forward_constructible(Type) && nothrow_destructible(Type));
+
+    /** @brief Insert a range of copies */
+    Iterator insertCopy(Iterator pos, const Range count, const Type &value)
+        noexcept(nothrow_copy_constructible(Type) && nothrow_forward_constructible(Type) && nothrow_destructible(Type));
+
+    /** @brief Insert a value by copy */
+    Iterator insert(Iterator pos, const Type &value)
+        noexcept(nothrow_copy_constructible(Type) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+        { return insert(pos, &value, &value + 1); }
+
+    /** @brief Insert a value by move */
+    Iterator insert(Iterator pos, Type &&value)
+        noexcept(nothrow_move_constructible(Type) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
+        { return insert(pos, std::make_move_iterator(&value), std::make_move_iterator(&value + 1)); }
 
     /** @brief Insert an initializer list */
     Iterator insert(Iterator pos, std::initializer_list<Type> &&init)
         noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
         { return insert(pos, init.begin(), init.end()); }
 
-    /** @brief Insert a range of copies */
-    Iterator insert(Iterator pos, const Range count)
-        noexcept(nothrow_constructible(Type) && nothrow_destructible(Type));
-
-    /** @brief Insert a range of copies */
-    Iterator insert(Iterator pos, const Range count, const Type &value)
-        noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type));
-
     /** @brief Insert a range of element by iterating over iterators */
     template<std::input_iterator InputIterator>
-        requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
     Iterator insert(Iterator pos, InputIterator from, InputIterator to)
         noexcept(nothrow_forward_iterator_constructible(InputIterator) && nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
@@ -175,18 +183,18 @@ public:
 
     /** @brief Resize the vector using default constructor to initialize each element */
     void resize(const Range count)
-        noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
+        noexcept(nothrow_default_constructible(Type) && nothrow_destructible(Type))
         requires std::constructible_from<Type>;
 
     /** @brief Resize the vector by copying given element */
-    void resize(const Range count, const Type &type)
-        noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
+    void resize(const Range count, const Type &value)
+        noexcept(nothrow_copy_constructible(Type) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
         requires std::copy_constructible<Type>;
 
     /** @brief Resize the vector with input iterators */
     template<std::input_iterator InputIterator>
     void resize(InputIterator from, InputIterator to)
-        noexcept(nothrow_destructible(Type) && nothrow_forward_iterator_constructible(InputIterator));
+        noexcept(nothrow_forward_iterator_constructible(InputIterator) && nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
     /** @brief Resize the vector using a map function with input iterators */
     template<std::input_iterator InputIterator, typename Map>
@@ -210,8 +218,7 @@ public:
 
     /** @brief Comparison operators */
     [[nodiscard]] bool operator==(const VectorDetails &other) const noexcept
-        requires std::equality_comparable<Type>
-        { return size() == other.size() && std::equal(begin(), end(), other.begin()); }
+        requires std::equality_comparable<Type>;
     [[nodiscard]] bool operator!=(const VectorDetails &other) const noexcept
         requires std::equality_comparable<Type>
         { return !operator==(other); }
@@ -240,9 +247,9 @@ public:
     /** @brief Grow internal buffer of a given minimum */
     void grow(const Range minimum = Range()) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
-private:
+protected:
     /** @brief Reserve unsafe takes IsSafe as template parameter */
-    template<bool IsSafe>
+    template<bool IsSafe = true>
     bool reserveUnsafe(const Range capacity) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 };
 

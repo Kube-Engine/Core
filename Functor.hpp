@@ -137,12 +137,14 @@ public:
         requires Internal::FunctorCacheRequirements<ClassFunctor, CacheSize> && Internal::FunctorInvocable<ClassFunctor, Return, Args...>
     void prepare(ClassFunctor &&functor) noexcept
     {
+        using FlatClassFunctor = std::remove_cvref_t<ClassFunctor>;
+
         release<false>();
         _invoke = [](Cache &cache, Args ...args) -> Return {
             return CacheAs<ClassFunctor>(cache)(std::forward<Args>(args)...);
         };
         _destruct = nullptr;
-        new (&_cache) ClassFunctor(std::forward<ClassFunctor>(functor));
+        new (&_cache) FlatClassFunctor(std::forward<ClassFunctor>(functor));
     }
 
     /** @brief Prepare a non-trivial functor with an allocator */

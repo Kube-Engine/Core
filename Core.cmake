@@ -16,14 +16,17 @@ set(KubeCoreSources
     ${KubeCoreDir}/HeapArray.hpp
     ${KubeCoreDir}/HeapArray.ipp
     ${KubeCoreDir}/FlatVector.hpp
-    ${KubeCoreDir}/FlatVector.ipp
+    ${KubeCoreDir}/FlatVectorBase.hpp
+    ${KubeCoreDir}/FlatVectorBase.ipp
     ${KubeCoreDir}/FlatString.hpp
     ${KubeCoreDir}/FlatString.ipp
     ${KubeCoreDir}/VectorDetails.hpp
     ${KubeCoreDir}/Vector.hpp
-    ${KubeCoreDir}/Vector.ipp
+    ${KubeCoreDir}/VectorBase.hpp
+    ${KubeCoreDir}/VectorBase.ipp
     ${KubeCoreDir}/SmallVector.hpp
-    ${KubeCoreDir}/SmallVector.ipp
+    ${KubeCoreDir}/SmallVectorBase.hpp
+    ${KubeCoreDir}/SmallVectorBase.ipp
     ${KubeCoreDir}/TrivialFunctor.hpp
     ${KubeCoreDir}/Functor.hpp
     ${KubeCoreDir}/DispatcherDetails.hpp

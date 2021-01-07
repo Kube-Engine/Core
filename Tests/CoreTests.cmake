@@ -5,6 +5,7 @@ get_filename_component(KubeCoreTestsDir ${CMAKE_CURRENT_LIST_FILE} PATH)
 set(KubeCoreTestsSources
     ${KubeCoreTestsDir}/tests_HeapArray.cpp
     ${KubeCoreTestsDir}/tests_Vector.cpp
+    ${KubeCoreTestsDir}/tests_SortedVector.cpp
     ${KubeCoreTestsDir}/tests_FlatString.cpp
     ${KubeCoreTestsDir}/tests_TrivialFunctor.cpp
     ${KubeCoreTestsDir}/tests_Functor.cpp

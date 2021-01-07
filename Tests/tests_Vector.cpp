@@ -189,15 +189,15 @@ TEST(Vector, InsertFill) \
 { \
     Vector<int __VA_OPT__(,) __VA_ARGS__> vector; \
  \
-    vector.insert(vector.begin(), 2, 42); \
+    vector.insertCopy(vector.begin(), 2, 42); \
     ASSERT_EQ(vector.size(), 2); \
     for (auto &elem : vector) \
         ASSERT_EQ(elem, 42); \
-    vector.insert(vector.begin(), 1, 32); \
+    vector.insertCopy(vector.begin(), 1, 32); \
     ASSERT_EQ(vector.front(), 32); \
-    vector.insert(vector.end(), 1, 32); \
+    vector.insertCopy(vector.end(), 1, 32); \
     ASSERT_EQ(vector.back(), 32); \
-    vector.insert(vector.end(), 42, 32); \
+    vector.insertCopy(vector.end(), 42, 32); \
     for (auto i = 4u; i < vector.size(); ++i) \
         ASSERT_EQ(vector[i], 32); \
 } \
@@ -212,11 +212,11 @@ TEST(Vector, Clear) \
     for (auto i = 0u; i < count; ++i) \
         ASSERT_EQ(data[i], value1); \
     vector.clear(); \
-    vector.insert(vector.begin(), count, value2); \
+    vector.insertCopy(vector.begin(), count, value2); \
     for (auto i = 0u; i < count; ++i) \
             ASSERT_EQ(data[i], value2); \
     vector.clear(); \
-    vector.insert(vector.begin(), count * 2, value1); \
+    vector.insertCopy(vector.begin(), count * 2, value1); \
     ASSERT_NE(vector.data(), data); \
 } \
  \

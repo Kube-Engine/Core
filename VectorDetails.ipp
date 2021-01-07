@@ -4,10 +4,9 @@
  */
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
-template<typename ...Args>
+template<typename ...Args> requires std::constructible_from<Type, Args...>
 inline Type &kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::push(Args &&...args)
-    noexcept(std::is_nothrow_constructible_v<Type, Args...> && nothrow_destructible(Type))
-    requires std::constructible_from<Type, Args...>
+    noexcept(nothrow_constructible(Type, Args...) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     if (!data()) [[unlikely]]
         reserveUnsafe<false>(2);
@@ -31,8 +30,8 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::Iterator
-    kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::insert(Iterator pos, const Range count)
-    noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
+    kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::insertDefault(Iterator pos, const Range count)
+    noexcept(nothrow_default_constructible(Type) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     if (!count) [[unlikely]]
         return end();
@@ -53,7 +52,11 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         setCapacity(desiredCapacity);
         if constexpr (IsSmallOptimized) {
             if (tmpData == currentData) {
-                std::uninitialized_move(currentBegin + position, currentEnd, tmpData + position + count);
+                if (const auto after = currentSize - position; after > count) {
+                    std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
+                    std::move_backward(currentBegin + position, currentEnd - count, currentEnd);
+                } else
+                    std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
                 std::uninitialized_default_construct_n(tmpData + position, count);
                 return tmpData + position;
             }
@@ -63,9 +66,10 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         std::uninitialized_default_construct_n(tmpData + position, count);
         deallocate(currentData);
         return tmpData + position;
-    } else if (const auto after = sizeUnsafe() - position; after > count)
+    } else if (const auto after = currentSize - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
-    else
+        std::move_backward(currentBegin + position, currentEnd - count, currentEnd);
+    } else
         std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
     std::uninitialized_default_construct_n(currentBegin + position, count);
     setSize(currentSize + count);
@@ -74,8 +78,9 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::Iterator
-    kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::insert(Iterator pos, const Range count, const Type &value)
-    noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
+    kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::insertCopy(
+        Iterator pos, const Range count, const Type &value)
+    noexcept(nothrow_copy_constructible(Type) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     if (!count) [[unlikely]]
         return end();
@@ -96,7 +101,11 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         setCapacity(desiredCapacity);
         if constexpr (IsSmallOptimized) {
             if (tmpData == currentData) {
-                std::uninitialized_move(currentBegin + position, currentEnd, tmpData + position + count);
+                if (const auto after = currentSize - position; after > count) {
+                    std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
+                    std::move_backward(currentBegin + position, currentEnd - count, currentEnd);
+                } else
+                    std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
                 std::fill_n(tmpData + position, count, value);
                 return tmpData + position;
             }
@@ -106,9 +115,10 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         std::fill_n(tmpData + position, count, value);
         deallocate(currentData);
         return tmpData + position;
-    } else if (const auto after = sizeUnsafe() - position; after > count)
+    } else if (const auto after = currentSize - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
-    else
+        std::move_backward(currentBegin + position, currentEnd - count, currentEnd);
+    } else
         std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
     std::fill_n(currentBegin + position, count, value);
     setSize(currentSize + count);
@@ -117,9 +127,9 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 template<std::input_iterator InputIterator>
-    requires std::constructible_from<Type, decltype(*std::declval<InputIterator>())>
 inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::Iterator
-    kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::insert(Iterator pos, InputIterator from, InputIterator to)
+    kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::insert(
+        Iterator pos, InputIterator from, InputIterator to)
     noexcept(nothrow_forward_iterator_constructible(InputIterator) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     const Range count = std::distance(from, to);
@@ -144,7 +154,11 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         setCapacity(desiredCapacity);
         if constexpr (IsSmallOptimized) {
             if (tmpData == currentData) {
-                std::uninitialized_move_n(currentBegin + position, count, tmpData + position + count);
+                if (const auto after = currentSize - position; after > count) {
+                    std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
+                    std::move_backward(currentBegin + position, currentEnd - count, currentEnd);
+                } else
+                    std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
                 std::copy(from, to, tmpData + position);
                 return tmpData + position;
             }
@@ -154,9 +168,10 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         std::copy(from, to, tmpData + position);
         deallocate(currentData);
         return tmpData + position;
-    } else if (const auto after = currentSize - position; after > count)
+    } else if (const auto after = currentSize - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
-    else
+        std::move_backward(currentBegin + position, currentEnd - count, currentEnd);
+    } else
         std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
     std::copy(from, to, currentBegin + position);
     setSize(currentSize + count);
@@ -166,7 +181,8 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 template<std::input_iterator InputIterator, typename Map>
 inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::Iterator
-    kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::insert(Iterator pos, InputIterator from, InputIterator to, Map &&map)
+    kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::insert(
+        Iterator pos, InputIterator from, InputIterator to, Map &&map)
 {
     constexpr auto MapCopy = [](InputIterator from, InputIterator to, auto &&map, Iterator begin) {
         while (from != to) {
@@ -201,7 +217,11 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         setCapacity(desiredCapacity);
         if constexpr (IsSmallOptimized) {
             if (tmpData == currentData) {
-                std::uninitialized_move_n(currentBegin + position, count, tmpData + position + count);
+                if (const auto after = currentSize - position; after > count) {
+                    std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
+                    std::move_backward(currentBegin + position, currentEnd - count, currentEnd);
+                } else
+                    std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
                 MapCopy(from, to, std::forward<Map>(map), tmpData + position);
                 return tmpData + position;
             }
@@ -211,9 +231,10 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         MapCopy(from, to, std::forward<Map>(map), tmpData + position);
         deallocate(currentData);
         return tmpData + position;
-    } else if (const auto after = currentSize - position; after > count)
+    } else if (const auto after = currentSize - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
-    else
+        std::move_backward(currentBegin + position, currentEnd - count, currentEnd);
+    } else
         std::uninitialized_move(currentBegin + position, currentEnd, currentEnd + count - after);
     MapCopy(from, to, std::forward<Map>(map), currentBegin + position);
     setSize(currentSize + count);
@@ -234,7 +255,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::resize(const Range count)
-    noexcept(std::is_nothrow_constructible_v<Type> && nothrow_destructible(Type))
+    noexcept(nothrow_default_constructible(Type) && nothrow_destructible(Type))
     requires std::constructible_from<Type>
 {
     if (!count) [[unlikely]] {
@@ -247,12 +268,12 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
     else [[unlikely]]
         clearUnsafe();
     setSize(count);
-    std::uninitialized_default_construct_n(dataUnsafe(), count);
+    std::uninitialized_value_construct_n(dataUnsafe(), count);
 }
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::resize(const Range count, const Type &value)
-    noexcept(nothrow_copy_constructible(Type) && nothrow_destructible(Type))
+    noexcept(nothrow_copy_constructible(Type) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
     requires std::copy_constructible<Type>
 {
     if (!count) [[unlikely]] {
@@ -271,7 +292,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 template<std::input_iterator InputIterator>
 inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::resize(InputIterator from, InputIterator to)
-    noexcept(nothrow_destructible(Type) && nothrow_forward_iterator_constructible(InputIterator))
+    noexcept(nothrow_forward_iterator_constructible(InputIterator) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     const Range count = std::distance(from, to);
 
@@ -290,7 +311,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 template<std::input_iterator InputIterator, typename Map>
-void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::resize(InputIterator from, InputIterator to, Map &&map)
+inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::resize(InputIterator from, InputIterator to, Map &&map)
 {
     const Range count = std::distance(from, to);
 
@@ -407,4 +428,20 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
     std::uninitialized_move_n(currentData, currentSize, tmpData);
     std::destroy_n(currentData, currentSize);
     deallocate(currentData);
+}
+
+template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
+inline bool kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::operator==(const VectorDetails &other) const noexcept
+    requires std::equality_comparable<Type>
+{
+    const auto count = size();
+    const auto otherCount = other.size();
+
+    if (count == otherCount) [[unlikely]] {
+        if (count) [[likely]]
+            return std::equal(beginUnsafe(), endUnsafe(), other.beginUnsafe());
+        else [[unlikely]]
+            return true;
+    } else [[likely]]
+        return false;
 }
