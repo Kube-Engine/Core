@@ -36,7 +36,7 @@ public:
 
     /** @brief Add a functor to dispatch list */
     template<typename Functor>
-    void add(Functor &&functor) noexcept { _functors.push().template prepare(std::forward<Functor>(functor)); }
+    void add(Functor &&functor) noexcept { _functors.push().prepare(std::forward<Functor>(functor)); }
 
     /** @brief Add a member function to dispatch list */
     template<auto MemberFunction, typename ClassType>

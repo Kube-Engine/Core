@@ -118,9 +118,10 @@ public:
     void release(void)
     {
         if (_destruct) {
-            if (CacheAs<RuntimeAllocation>(_cache).size) [[likely]]
+            auto &cache = CacheAs<RuntimeAllocation>(_cache);
+            if (cache.size) [[likely]]
                 _destruct(_cache);
-            std::free(CacheAs<RuntimeAllocation>(_cache).ptr);
+            Utils::AlignedFree(cache.ptr);
         }
         if constexpr (ResetMembers) {
             _invoke = nullptr;
@@ -161,7 +162,7 @@ public:
             if (runtime.size) [[likely]]
                 _destruct(_cache);
             if (runtime.capacity < sizeof(FlatClassFunctor)) [[unlikely]] {
-                std::free(runtime.ptr);
+                Utils::AlignedFree(runtime.ptr);
                 runtime.ptr = Utils::AlignedAlloc<alignof(FlatClassFunctor)>(sizeof(FlatClassFunctor));
                 runtime.capacity = sizeof(FlatClassFunctor);
             }

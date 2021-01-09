@@ -73,5 +73,5 @@ template<typename Type, std::size_t OptimizedCapacity, std::integral Range>
 inline void kF::Core::Internal::SmallVectorBase<Type, OptimizedCapacity, Range>::deallocate(Type *data) noexcept
 {
     if (data != optimizedData()) [[unlikely]]
-        std::free(data);
+        Utils::AlignedFree(data);
 }

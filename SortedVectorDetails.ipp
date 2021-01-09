@@ -16,7 +16,7 @@ inline Type &kF::Core::Internal::SortedVectorDetails<Base, Type, Range, Compare,
 
 template<typename Base, typename Type, std::integral Range, typename Compare, bool IsSmallOptimized>
 inline void kF::Core::Internal::SortedVectorDetails<Base, Type, Range, Compare, IsSmallOptimized>::insertDefault(const Range count)
-    noexcept(nothrow_constructible(Type) && nothrow_destructible(Type))
+    noexcept(nothrow_default_constructible(Type) && nothrow_destructible(Type))
 {
     if (count) [[likely]]
         DetailsBase::insertDefault(findSortedPlacement(Type{}), count);

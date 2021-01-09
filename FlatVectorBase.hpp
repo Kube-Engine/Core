@@ -93,7 +93,7 @@ protected:
 
     /** @brief Deallocates a buffer */
     void deallocate(Type *data) noexcept
-        { std::free(reinterpret_cast<Header *>(data) - 1); }
+        { Utils::AlignedFree(reinterpret_cast<Header *>(data) - 1); }
 
 private:
     Header *_ptr { nullptr };

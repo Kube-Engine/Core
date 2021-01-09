@@ -13,7 +13,7 @@ kF::Core::MPMCQueue<Type>::MPMCQueue(const std::size_t capacity)
         throw std::invalid_argument("Core::MPMCQueue: Buffer capacity must be a power of 2");
     else if (_tailCache.buffer.mask < 2)
         throw std::logic_error("Core::MPMCQueue: Capacity must be >= 2");
-    else if (_tailCache.buffer.data = reinterpret_cast<Cell *>(std::malloc(sizeof(Cell) * capacity)); !_tailCache.buffer.data)
+    else if (_tailCache.buffer.data = reinterpret_cast<Cell *>(Utils::AlignedAlloc<alignof(Type)>(sizeof(Cell) * capacity)); !_tailCache.buffer.data)
         throw std::runtime_error("Core::MPMCQueue: Malloc failed");
     for (auto i = 0ul; i < capacity; ++i)
         new (&_tailCache.buffer.data[i].sequence) decltype(Cell::sequence)(i);
@@ -24,7 +24,7 @@ template<typename Type>
 kF::Core::MPMCQueue<Type>::~MPMCQueue(void) noexcept_destructible(Type)
 {
     clear();
-    std::free(_tailCache.buffer.data);
+    Utils::AlignedFree(_tailCache.buffer.data);
 }
 
 template<typename Type>

@@ -10,7 +10,27 @@ inline Cast *kF::Core::Utils::AlignedAlloc(const std::size_t bytes) noexcept
 
     constexpr auto Alignment = std::max(alignof(std::size_t), RequiredAlignment);
 
+#ifdef _WIN32
+    return reinterpret_cast<Cast *>(std::malloc(bytes));
+#else
     return reinterpret_cast<Cast *>(std::aligned_alloc(Alignment, (bytes + Alignment - 1) & -Alignment));
+#endif
+}
+
+template<typename Cast>
+inline Cast *kF::Core::Utils::AlignedAlloc(const std::size_t bytes, [[maybe_unused]] const std::size_t alignment) noexcept
+{
+#ifdef _WIN32
+    return reinterpret_cast<Cast *>(std::malloc(bytes));
+#else
+    const auto align = std::max(alignof(std::size_t), alignment);
+    return reinterpret_cast<Cast *>(std::aligned_alloc(align, (bytes + align - 1) & -align));
+#endif
+}
+
+inline void kF::Core::Utils::AlignedFree(void *data) noexcept
+{
+    std::free(data);
 }
 
 template<std::integral Unit>

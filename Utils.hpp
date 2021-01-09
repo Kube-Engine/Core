@@ -111,9 +111,15 @@ namespace kF::Core
 
     namespace Utils
     {
-        /** @brief Forwards to std::aligned_alloc, but ensure arguments */
+        /** @brief Similar to std::aligned_alloc, but ensure arguments, you must use AlignedFree to free the memory */
         template<std::size_t RequiredAlignment, typename Cast = void>
         [[nodiscard]] Cast *AlignedAlloc(const std::size_t bytes) noexcept;
+
+        template<typename Cast = void>
+        [[nodiscard]] Cast *AlignedAlloc(const std::size_t bytes, const std::size_t alignment) noexcept;
+
+        /** @brief Free a pointer allocated with AlignedAlloc */
+        void AlignedFree(void *data) noexcept;
 
         /** @brief Helper to know if a given type is a std::move_iterator */
         template<typename Type>

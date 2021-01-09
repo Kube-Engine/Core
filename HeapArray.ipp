@@ -14,8 +14,8 @@ void kF::Core::HeapArray<Type>::allocate(const std::size_t size, Args &&...args)
     }
     if (size && _size != size) [[likely]] {
         if (_size) [[unlikely]]
-            std::free(_data);
-        _data = reinterpret_cast<Type *>(std::malloc(sizeof(Type) * size));
+            Utils::AlignedFree(_data);
+        _data = reinterpret_cast<Type *>(Utils::AlignedAlloc<alignof(Type)>(sizeof(Type) * size));
         kFAssert(_data,
             throw std::runtime_error("Core::HeapArray::allocate: Malloc failed"));
     }
@@ -33,7 +33,7 @@ inline void kF::Core::HeapArray<Type>::release(void) noexcept_destructible(Type)
         for (auto &elem : *this)
             elem.~Type();
     }
-    std::free(_data);
+    Utils::AlignedFree(_data);
     _data = nullptr;
     _size = 0;
 }
