@@ -13,7 +13,7 @@ namespace kF
     using HashedName = std::uint32_t;
 
     /** @brief The hash begin offset */
-    [[nodiscard]] constexpr HashedName HashOffset = 4294967291u;
+    constexpr HashedName HashOffset = 4294967291u;
 
     /** @brief Compile-time string hashing */
     [[nodiscard]] constexpr HashedName Hash(char const * const str, const std::size_t len) noexcept {
