@@ -14,5 +14,5 @@ namespace kF::Core
     using SortedFlatVector = Internal::SortedVectorDetails<Internal::FlatVectorBase<Type, Range>, Type, Range, Compare>;
 
     template<typename Type, typename Compare = std::less<Type>>
-    using TinySortedFlatVector = SortedFlatVector<Type, std::uint32_t, Compare>;
+    using SortedTinyFlatVector = SortedFlatVector<Type, std::uint32_t, Compare>;
 }

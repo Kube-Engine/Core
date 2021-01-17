@@ -64,7 +64,7 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         std::uninitialized_move_n(currentBegin, position, tmpData);
         std::uninitialized_move(currentBegin + position, currentEnd, tmpData + position + count);
         std::uninitialized_default_construct_n(tmpData + position, count);
-        deallocate(currentData);
+        deallocate(currentData, currentCapacity);
         return tmpData + position;
     } else if (const auto after = currentSize - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
@@ -113,7 +113,7 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         std::uninitialized_move_n(currentBegin, position, tmpData);
         std::uninitialized_move(currentBegin + position, currentEnd, tmpData + position + count);
         std::fill_n(tmpData + position, count, value);
-        deallocate(currentData);
+        deallocate(currentData, currentCapacity);
         return tmpData + position;
     } else if (const auto after = currentSize - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
@@ -166,7 +166,7 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         std::uninitialized_move_n(currentBegin, position, tmpData);
         std::uninitialized_move(currentBegin + position, currentEnd, tmpData + position + count);
         std::copy(from, to, tmpData + position);
-        deallocate(currentData);
+        deallocate(currentData, currentCapacity);
         return tmpData + position;
     } else if (const auto after = currentSize - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
@@ -229,7 +229,7 @@ inline typename kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOpti
         std::uninitialized_move_n(currentBegin, position, tmpData);
         std::uninitialized_move(currentBegin + position, currentEnd, tmpData + position + count);
         MapCopy(from, to, std::forward<Map>(map), tmpData + position);
-        deallocate(currentData);
+        deallocate(currentData, currentCapacity);
         return tmpData + position;
     } else if (const auto after = currentSize - position; after > count) {
         std::uninitialized_move(currentEnd - count, currentEnd, currentEnd);
@@ -361,11 +361,12 @@ template<typename Base, typename Type, std::integral Range, bool IsSmallOptimize
 inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::releaseUnsafe(void) noexcept_destructible(Type)
 {
     const auto currentData = dataUnsafe();
+    const auto currentCapacity = capacityUnsafe();
 
     clearUnsafe();
     setCapacity(0);
     setData(nullptr);
-    deallocate(currentData);
+    deallocate(currentData, currentCapacity);
 }
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
@@ -384,7 +385,8 @@ inline bool kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
     noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     if constexpr (IsSafe) {
-        if (capacityUnsafe() >= capacity) [[unlikely]]
+        const auto currentCapacity = capacityUnsafe();
+        if (currentCapacity >= capacity) [[unlikely]]
             return false;
         const auto currentSize = sizeUnsafe();
         const auto currentData = dataUnsafe();
@@ -398,7 +400,7 @@ inline bool kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
         }
         std::uninitialized_move_n(currentData, currentSize, tmpData);
         std::destroy_n(currentData, currentSize);
-        deallocate(currentData);
+        deallocate(currentData, currentCapacity);
         return true;
     } else {
         setData(allocate(capacity));
@@ -427,7 +429,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
     }
     std::uninitialized_move_n(currentData, currentSize, tmpData);
     std::destroy_n(currentData, currentSize);
-    deallocate(currentData);
+    deallocate(currentData, currentCapacity);
 }
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>

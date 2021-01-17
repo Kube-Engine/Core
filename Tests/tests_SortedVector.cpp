@@ -8,8 +8,11 @@
 #include <string>
 
 #include <Kube/Core/SortedVector.hpp>
+#include <Kube/Core/SortedAllocatedVector.hpp>
 #include <Kube/Core/SortedFlatVector.hpp>
+#include <Kube/Core/SortedAllocatedFlatVector.hpp>
 #include <Kube/Core/SortedSmallVector.hpp>
+#include <Kube/Core/SortedAllocatedSmallVector.hpp>
 
 #define GENERATE_VECTOR_TESTS(Vector, ...) \
 TEST(Vector, Basics) \
@@ -170,6 +173,21 @@ TEST(Vector, NullArgs) \
 
 using namespace kF::Core;
 
+static std::pmr::unsynchronized_pool_resource Pool;
+
+static void *DefaultAlloc(const std::size_t bytes, const std::size_t alignment)
+{
+    return Pool.allocate(bytes, alignment);
+}
+
+static void DefaultDealloc(void * const data, const std::size_t bytes, const std::size_t alignment)
+{
+    Pool.deallocate(data, bytes, alignment);
+}
+
 GENERATE_VECTOR_TESTS(SortedVector)
+GENERATE_VECTOR_TESTS(SortedAllocatedVector, &DefaultAlloc, &DefaultDealloc)
 GENERATE_VECTOR_TESTS(SortedFlatVector)
+GENERATE_VECTOR_TESTS(SortedAllocatedFlatVector, &DefaultAlloc, &DefaultDealloc)
 GENERATE_VECTOR_TESTS(SortedSmallVector, 4)
+GENERATE_VECTOR_TESTS(SortedAllocatedSmallVector, 4, &DefaultAlloc, &DefaultDealloc)

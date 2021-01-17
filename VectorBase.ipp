@@ -8,7 +8,7 @@ inline void kF::Core::Internal::VectorBase<Type, Range>::steal(VectorBase &other
 {
     if (_data) {
         std::destroy(beginUnsafe(), endUnsafe());
-        deallocate(_data);
+        deallocate(_data, _capacity);
     }
     _data = other._data;
     _size = other._size;

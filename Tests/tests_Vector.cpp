@@ -8,8 +8,11 @@
 #include <string>
 
 #include <Kube/Core/Vector.hpp>
+#include <Kube/Core/AllocatedVector.hpp>
 #include <Kube/Core/FlatVector.hpp>
+#include <Kube/Core/AllocatedFlatVector.hpp>
 #include <Kube/Core/SmallVector.hpp>
+#include <Kube/Core/AllocatedSmallVector.hpp>
 
 #define GENERATE_VECTOR_TESTS(Vector, ...) \
 TEST(Vector, Basics) \
@@ -272,9 +275,24 @@ TEST(Vector, Find) \
 
 using namespace kF::Core;
 
+static std::pmr::unsynchronized_pool_resource Pool;
+
+static void *DefaultAlloc(const std::size_t bytes, const std::size_t alignment)
+{
+    return Pool.allocate(bytes, alignment);
+}
+
+static void DefaultDealloc(void * const data, const std::size_t bytes, const std::size_t alignment)
+{
+    Pool.deallocate(data, bytes, alignment);
+}
+
 GENERATE_VECTOR_TESTS(Vector)
+GENERATE_VECTOR_TESTS(AllocatedVector, &DefaultAlloc, &DefaultDealloc)
 GENERATE_VECTOR_TESTS(FlatVector)
+GENERATE_VECTOR_TESTS(AllocatedFlatVector, &DefaultAlloc, &DefaultDealloc)
 GENERATE_VECTOR_TESTS(SmallVector, 4)
+GENERATE_VECTOR_TESTS(AllocatedSmallVector, 4, &DefaultAlloc, &DefaultDealloc)
 
 TEST(SmallVector, SmallOptimizationInsertRange)
 {

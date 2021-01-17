@@ -92,7 +92,7 @@ protected:
         { return reinterpret_cast<Type *>(Utils::AlignedAlloc<alignof(Header), Header>(sizeof(Header) + sizeof(Type) * capacity) + 1); }
 
     /** @brief Deallocates a buffer */
-    void deallocate(Type *data) noexcept
+    void deallocate(Type * const data, const Range) noexcept
         { Utils::AlignedFree(reinterpret_cast<Header *>(data) - 1); }
 
 private:

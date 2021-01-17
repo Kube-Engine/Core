@@ -9,7 +9,7 @@ inline void kF::Core::Internal::SmallVectorBase<Type, OptimizedCapacity, Range>:
 {
     if (_data) {
         std::destroy(beginUnsafe(), endUnsafe());
-        deallocate(_data);
+        deallocate(_data, _capacity);
     }
     if (other.isCacheUsed()) {
         std::uninitialized_move(other.beginUnsafe(), other.endUnsafe(), optimizedData());
@@ -70,7 +70,7 @@ inline Type *kF::Core::Internal::SmallVectorBase<Type, OptimizedCapacity, Range>
 }
 
 template<typename Type, std::size_t OptimizedCapacity, std::integral Range>
-inline void kF::Core::Internal::SmallVectorBase<Type, OptimizedCapacity, Range>::deallocate(Type *data) noexcept
+inline void kF::Core::Internal::SmallVectorBase<Type, OptimizedCapacity, Range>::deallocate(Type * const data, const Range) noexcept
 {
     if (data != optimizedData()) [[unlikely]]
         Utils::AlignedFree(data);

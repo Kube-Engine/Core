@@ -85,7 +85,7 @@ protected:
         { return reinterpret_cast<Type *>(Utils::AlignedAlloc<alignof(Type)>(sizeof(Type) * capacity)); }
 
     /** @brief Deallocates a buffer */
-    void deallocate(Type *data) noexcept { Utils::AlignedFree(data); }
+    void deallocate(Type * const data, const Range) noexcept { Utils::AlignedFree(data); }
 
 private:
     Type *_data { nullptr };

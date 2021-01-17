@@ -90,20 +90,19 @@ protected:
     [[nodiscard]] Type *allocate(const Range capacity) noexcept;
 
     /** @brief Deallocates a buffer */
-    void deallocate(Type *data) noexcept;
+    void deallocate(Type * const data, const Range capacity) noexcept;
 
+    /** @brief Get a pointer to the data cache */
+    [[nodiscard]] Type *optimizedData(void) noexcept
+        { return reinterpret_cast<Type *>(&_optimizedData); }
+    [[nodiscard]] const Type *optimizedData(void) const noexcept
+        { return reinterpret_cast<const Type *>(&_optimizedData); }
 
 private:
     alignas(alignof(Type)) std::byte _optimizedData[sizeof(Type) * OptimizedCapacity];
     Type *_data { nullptr };
     Range _size {};
     Range _capacity {};
-
-    [[nodiscard]] Type *optimizedData(void) noexcept
-        { return reinterpret_cast<Type *>(&_optimizedData); }
-
-    [[nodiscard]] const Type *optimizedData(void) const noexcept
-        { return reinterpret_cast<const Type *>(&_optimizedData); }
 };
 
 #include "SmallVectorBase.ipp"
