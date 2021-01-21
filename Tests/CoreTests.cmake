@@ -23,3 +23,8 @@ PUBLIC
     KubeCore
     GTest::GTest GTest::Main
 )
+
+if(KF_COVERAGE)
+    target_compile_options(${PROJECT_NAME} PUBLIC --coverage)
+    target_link_options(${PROJECT_NAME} PUBLIC --coverage)
+endif()
