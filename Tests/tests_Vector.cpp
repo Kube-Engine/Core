@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <memory_resource>
 
 #include <Kube/Core/Vector.hpp>
 #include <Kube/Core/AllocatedVector.hpp>

@@ -46,7 +46,7 @@ public:
 
     /** @brief Functor signature */
     using OpaqueInvoke = Return(*)(Cache &cache, Args...args);
-    using OpaqueDestructor = void(*)(Cache &data);
+    using OpaqueDestructor = void(*)(Cache &cache, const bool deallocate);
 
     /** @brief Structure describing a runtime allocation inside the functor */
     struct alignas_quarter_cacheline RuntimeAllocation
@@ -104,12 +104,16 @@ public:
 
 
     /** @brief Destroy the holded instance if it isn't trivial, without freeing memory */
+    template<bool IsDestructSafe = false>
     void destroy(void)
     {
-        if (_destruct && CacheAs<RuntimeAllocation>(_cache).size) {
-            CacheAs<RuntimeAllocation>(_cache).size = 0u;
-            _destruct(_cache);
+        if constexpr (!IsDestructSafe) {
+            if (!_destruct)
+                return;
         }
+        _destruct(_cache, false); // Deallocate set to false so we expect no deallocation
+        if (!CacheAs<RuntimeAllocation>(_cache).ptr) [[unlikely]] // Check performed for custom deleters
+            _destruct = nullptr;
     }
 
     /** @brief Destroy the functor and free its allocated memory
@@ -117,12 +121,8 @@ public:
     template<bool ResetMembers = true>
     void release(void)
     {
-        if (_destruct) {
-            auto &cache = CacheAs<RuntimeAllocation>(_cache);
-            if (cache.size) [[likely]]
-                _destruct(_cache);
-            Utils::AlignedFree(cache.ptr);
-        }
+        if (_destruct)
+            _destruct(_cache, true);
         if constexpr (ResetMembers) {
             _invoke = nullptr;
             _destruct = nullptr;
@@ -159,13 +159,11 @@ public:
         auto &runtime = CacheAs<RuntimeAllocation>(_cache);
 
         if (_destruct) {
-            if (runtime.size) [[likely]]
-                _destruct(_cache);
             if (runtime.capacity < sizeof(FlatClassFunctor)) [[unlikely]] {
-                Utils::AlignedFree(runtime.ptr);
+                release<false>();
                 runtime.ptr = Utils::AlignedAlloc<alignof(FlatClassFunctor)>(sizeof(FlatClassFunctor));
-                runtime.capacity = sizeof(FlatClassFunctor);
-            }
+            } else
+                destroy<true>();
         } else {
             runtime.ptr = Utils::AlignedAlloc<alignof(FlatClassFunctor)>(sizeof(FlatClassFunctor));
             runtime.capacity = sizeof(FlatClassFunctor);
@@ -178,8 +176,14 @@ public:
             else
                 return (*reinterpret_cast<ClassFunctorPtr &>(CacheAs<RuntimeAllocation>(cache).ptr))(std::forward<Args>(args)...);
         };
-        _destruct = [](Cache &cache) {
-            reinterpret_cast<ClassFunctorPtr &>(CacheAs<RuntimeAllocation>(cache).ptr)->~FlatClassFunctor();
+        _destruct = [](Cache &cache, const bool deallocate) {
+            auto &runtime = CacheAs<RuntimeAllocation>(cache);
+            if (runtime.size) {
+                runtime.size = 0u;
+                reinterpret_cast<ClassFunctorPtr &>(runtime.ptr)->~FlatClassFunctor();
+            }
+            if (deallocate)
+                Utils::AlignedFree(runtime.ptr);
         };
     }
 
@@ -219,6 +223,34 @@ public:
             return (*Function)(std::forward<Args>(args)...);
         };
         _destruct = nullptr;
+    }
+
+    /** @brief Prepare a pointer to functor using a custom deleter */
+    template<auto Deleter, typename ClassFunctor>
+        requires Internal::FunctorNoCacheRequirements<ClassFunctor, CacheSize>
+            && Internal::FunctorInvocable<ClassFunctor, Return, Args...>
+            && Internal::FunctorInvocable<decltype(Deleter), void, ClassFunctor *>
+    void prepare(ClassFunctor * const functorPtr) noexcept
+    {
+        using ClassFunctorPtr = ClassFunctor *;
+
+        auto &runtime = CacheAs<RuntimeAllocation>(_cache);
+
+        release<false>();
+        runtime.ptr = functorPtr;
+        runtime.size = sizeof(ClassFunctor);
+        runtime.capacity = sizeof(ClassFunctor);
+        _invoke = [](Cache &cache, Args ...args) -> Return {
+            if constexpr (std::is_same_v<Return, void>)
+                (*reinterpret_cast<ClassFunctorPtr &>(CacheAs<RuntimeAllocation>(cache).ptr))(std::forward<Args>(args)...);
+            else
+                return (*reinterpret_cast<ClassFunctorPtr &>(CacheAs<RuntimeAllocation>(cache).ptr))(std::forward<Args>(args)...);
+        };
+        _destruct = [](Cache &cache, const bool) {
+            auto &runtime = CacheAs<RuntimeAllocation>(cache);
+            Deleter(reinterpret_cast<ClassFunctorPtr>(runtime.ptr));
+            runtime.ptr = nullptr;
+        };
     }
 
     /** @brief Invoke internal functor */

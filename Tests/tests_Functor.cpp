@@ -89,6 +89,44 @@ TEST(Functor, NonTrivialClassFunctorBasics)
     ASSERT_FALSE(func2);
 }
 
+TEST(Functor, NonTrivialClassCustomDeleterFunctorBasics)
+{
+    Core::Functor<int(int)> func;
+
+    func.prepare<[](Core::Functor<int(int)> *ptr) { delete ptr; }>(
+        new Core::Functor<int(int)>([y = std::make_unique<int>(2)](const int x) {
+            return x * *y;
+            }
+        )
+    );
+
+    ASSERT_TRUE(func);
+    ASSERT_EQ(func(4), 8);
+    ASSERT_EQ(func(8), 16);
+    auto func2(std::move(func));
+    ASSERT_FALSE(func);
+    ASSERT_TRUE(func2);
+    ASSERT_EQ(func2(4), 8);
+    ASSERT_EQ(func2(8), 16);
+    func2 = std::move(func);
+    ASSERT_FALSE(func);
+    ASSERT_FALSE(func2);
+
+    // Re-prepare
+    func.prepare<[](Core::Functor<int(int)> *ptr) { delete ptr; }>(
+        new Core::Functor<int(int)>([y = std::make_unique<int>(2)](const int x) {
+            return x * *y;
+            }
+        )
+    );
+    ASSERT_TRUE(func);
+    ASSERT_EQ(func(4), 8);
+    // Break prepared allocation, without possibility to reuse memory
+    func.prepare([](int x) { return x; });
+    ASSERT_TRUE(func);
+    ASSERT_EQ(func(4), 4);
+}
+
 TEST(Functor, SneakyErrors)
 {
     bool trigger = false;

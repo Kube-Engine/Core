@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <memory_resource>
-
 #include "VectorBase.hpp"
 
 namespace kF::Core::Internal
