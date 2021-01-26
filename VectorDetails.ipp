@@ -249,8 +249,8 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
         return;
     const auto end = endUnsafe();
     setSize(sizeUnsafe() - std::distance(from, to));
-    std::copy(std::make_move_iterator(to), std::make_move_iterator(end), from);
-    std::destroy(to, end);
+    std::destroy(from, to);
+    std::uninitialized_move(to, end, from);
 }
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
@@ -403,6 +403,8 @@ inline bool kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
         deallocate(currentData, currentCapacity);
         return true;
     } else {
+        if (capacity == 0)
+            return false;
         setData(allocate(capacity));
         setSize(0);
         setCapacity(capacity);
