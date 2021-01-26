@@ -100,9 +100,9 @@ protected:
 
 private:
     alignas(alignof(Type)) std::byte _optimizedData[sizeof(Type) * OptimizedCapacity];
-    Type *_data { nullptr };
     Range _size {};
     Range _capacity {};
+    Type *_data { nullptr };
 };
 
 #include "SmallVectorBase.ipp"
