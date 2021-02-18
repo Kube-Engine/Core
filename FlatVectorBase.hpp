@@ -33,6 +33,9 @@ public:
     };
 
 
+    /** @brief Check if the instance is safe to access */
+    [[nodiscard]] bool isSafe(void) const noexcept { return _ptr; }
+
     /** @brief Fast empty check */
     [[nodiscard]] bool empty(void) const noexcept { return !_ptr || !sizeUnsafe(); }
 
@@ -59,6 +62,11 @@ public:
     [[nodiscard]] ConstIterator begin(void) const noexcept { return _ptr ? beginUnsafe() : ConstIterator(); }
     [[nodiscard]] ConstIterator end(void) const noexcept { return _ptr ? endUnsafe() : ConstIterator(); }
 
+    /** @brief Unsafe begin / end overloads */
+    [[nodiscard]] Iterator beginUnsafe(void) noexcept { return data(); }
+    [[nodiscard]] Iterator endUnsafe(void) noexcept { return data() + sizeUnsafe(); }
+    [[nodiscard]] ConstIterator beginUnsafe(void) const noexcept { return data(); }
+    [[nodiscard]] ConstIterator endUnsafe(void) const noexcept { return data() + sizeUnsafe(); }
 
     /** @brief Steal another instance */
     void steal(FlatVectorBase &other) noexcept;
@@ -67,9 +75,6 @@ public:
     void swap(FlatVectorBase &other) noexcept { std::swap(_ptr, other._ptr); }
 
 protected:
-    /** @brief Check if the instance is safe to access */
-    [[nodiscard]] bool isSafe(void) const noexcept { return _ptr; }
-
     /** @brief Protected data setter */
     void setData(Type * const data) noexcept { _ptr = reinterpret_cast<Header *>(data) - 1; }
 
@@ -78,13 +83,6 @@ protected:
 
     /** @brief Protected capacity setter */
     void setCapacity(const Range capacity) noexcept { _ptr->capacity = capacity; }
-
-
-    /** @brief Unsafe begin / end overloads */
-    [[nodiscard]] Iterator beginUnsafe(void) noexcept { return data(); }
-    [[nodiscard]] Iterator endUnsafe(void) noexcept { return data() + sizeUnsafe(); }
-    [[nodiscard]] ConstIterator beginUnsafe(void) const noexcept { return data(); }
-    [[nodiscard]] ConstIterator endUnsafe(void) const noexcept { return data() + sizeUnsafe(); }
 
 
     /** @brief Allocates a new buffer */

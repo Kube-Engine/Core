@@ -26,25 +26,25 @@ public:
     using Iterator = decltype(std::declval<Base &>().begin());
     using ConstIterator = decltype(std::declval<const Base &>().begin());
 
+    /** @brief Iterators helper types */
+    using ReverseIterator = std::reverse_iterator<Iterator>;
+    using ConstReverseIterator = std::reverse_iterator<ConstIterator>;
+
     /** @brief All required base functions */
     using Base::data;
     using Base::dataUnsafe;
-    using Base::setData;
     using Base::size;
     using Base::sizeUnsafe;
-    using Base::setSize;
     using Base::capacity;
     using Base::capacityUnsafe;
-    using Base::setCapacity;
     using Base::begin;
     using Base::beginUnsafe;
     using Base::end;
     using Base::endUnsafe;
-    using Base::allocate;
-    using Base::deallocate;
     using Base::empty;
     using Base::steal;
     using Base::swap;
+    using Base::isSafe;
 
     /** @brief Default constructor */
     VectorDetails(void) noexcept = default;
@@ -99,12 +99,12 @@ public:
     /** @brief Begin / End helpers */
     [[nodiscard]] ConstIterator cbegin(void) const noexcept { return begin(); }
     [[nodiscard]] ConstIterator cend(void) const noexcept { return end(); }
-    [[nodiscard]] Iterator rbegin(void) noexcept { return std::make_reverse_iterator(begin()); }
-    [[nodiscard]] Iterator rend(void) noexcept { return std::make_reverse_iterator(end()); }
-    [[nodiscard]] ConstIterator rbegin(void) const noexcept { return std::make_reverse_iterator(begin()); }
-    [[nodiscard]] ConstIterator rend(void) const noexcept { return std::make_reverse_iterator(end()); }
-    [[nodiscard]] ConstIterator crbegin(void) const noexcept { return rbegin(); }
-    [[nodiscard]] ConstIterator crend(void) const noexcept { return rend(); }
+    [[nodiscard]] ReverseIterator rbegin(void) noexcept { return std::make_reverse_iterator(begin()); }
+    [[nodiscard]] ReverseIterator rend(void) noexcept { return std::make_reverse_iterator(end()); }
+    [[nodiscard]] ConstReverseIterator rbegin(void) const noexcept { return std::make_reverse_iterator(begin()); }
+    [[nodiscard]] ConstReverseIterator rend(void) const noexcept { return std::make_reverse_iterator(end()); }
+    [[nodiscard]] ConstReverseIterator crbegin(void) const noexcept { return rbegin(); }
+    [[nodiscard]] ConstReverseIterator crend(void) const noexcept { return rend(); }
 
 
     /** @brief Access element at positon */
@@ -248,6 +248,12 @@ public:
     void grow(const Range minimum = Range()) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
 protected:
+    using Base::setSize;
+    using Base::setData;
+    using Base::setCapacity;
+    using Base::allocate;
+    using Base::deallocate;
+
     /** @brief Reserve unsafe takes IsSafe as template parameter */
     template<bool IsSafe = true>
     bool reserveUnsafe(const Range capacity) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));

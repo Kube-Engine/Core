@@ -26,15 +26,17 @@ class kF::Core::Internal::StringDetails : public Base
 public:
     using Base::Base;
     using Base::data;
+    using Base::dataUnsafe;
     using Base::size;
+    using Base::sizeUnsafe;
     using Base::begin;
     using Base::end;
     using Base::resize;
     using Base::insert;
-    using Base::empty;
+    using Base::isSafe;
     using Base::operator bool;
 
-    /** @brief Default constructor */
+    /** @brief Base::Default constructor */
     StringDetails(void) noexcept = default;
 
     /** @brief Copy constructor */
@@ -90,10 +92,10 @@ public:
     [[nodiscard]] bool operator!=(const std::basic_string_view<Type> &other) const noexcept { return !operator==(other); }
 
     /** @brief Get a std::string from the object */
-    [[nodiscard]] std::basic_string<Type> toStdView(void) const noexcept { return std::basic_string<Type>(data(), size()); }
+    [[nodiscard]] std::basic_string_view<Type> toStdView(void) const noexcept { return isSafe() ? std::basic_string_view<Type>(data(), sizeUnsafe()) : std::basic_string_view<Type>(); }
 
     /** @brief Get a std::string_view of the object */
-    [[nodiscard]] std::basic_string_view<Type> toStdString(void) const noexcept { return std::basic_string_view<Type>(data(), size()); }
+    [[nodiscard]] std::basic_string<Type> toStdString(void) const noexcept { return isSafe() ? std::basic_string<Type>(data(), sizeUnsafe()) : std::basic_string<Type>(); }
 
 private:
     /** @brief Strlen but with null cstring check */
