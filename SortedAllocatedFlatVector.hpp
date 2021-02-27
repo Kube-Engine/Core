@@ -21,12 +21,12 @@ namespace kF::Core
      * @tparam Range Range of container
      * @tparam Compare Compare operator
      */
-    template<typename Type, auto AllocateFunc, auto DeallocateFunc, std::integral Range = std::size_t, typename Compare = std::less<Type>>
-    using SortedAllocatedFlatVector = Internal::SortedVectorDetails<Internal::AllocatedFlatVectorBase<Type, Range, AllocateFunc, DeallocateFunc>, Type, Range, Compare>;
+    template<typename Type, auto AllocateFunc, auto DeallocateFunc, std::integral Range = std::size_t, typename Compare = std::less<Type>, typename CustomHeaderType = void>
+    using SortedAllocatedFlatVector = Internal::SortedVectorDetails<Internal::AllocatedFlatVectorBase<Type, Range, AllocateFunc, DeallocateFunc, CustomHeaderType>, Type, Range, Compare>;
 
     /** @brief 8 bytes vector using signed char with a reduced range
      * The vector guarantee that it will be sorted at any given time
      * The vector must take an allocator and a deallocator functor */
-    template<typename Type, auto AllocateFunc, auto DeallocateFunc, typename Compare = std::less<Type>>
-    using SortedAllocatedTinyFlatVector = SortedAllocatedFlatVector<Type, AllocateFunc, DeallocateFunc, std::uint32_t, Compare>;
+    template<typename Type, auto AllocateFunc, auto DeallocateFunc, typename Compare = std::less<Type>, typename CustomHeaderType = void>
+    using SortedAllocatedTinyFlatVector = SortedAllocatedFlatVector<Type, AllocateFunc, DeallocateFunc, std::uint32_t, Compare, CustomHeaderType>;
 }

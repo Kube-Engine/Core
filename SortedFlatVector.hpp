@@ -18,11 +18,11 @@ namespace kF::Core
      * @tparam Range Range of container
      * @tparam Compare Compare operator
      */
-    template<typename Type, std::integral Range = std::size_t, typename Compare = std::less<Type>>
-    using SortedFlatVector = Internal::SortedVectorDetails<Internal::FlatVectorBase<Type, Range>, Type, Range, Compare>;
+    template<typename Type, std::integral Range = std::size_t, typename Compare = std::less<Type>, typename CustomHeaderType = void>
+    using SortedFlatVector = Internal::SortedVectorDetails<Internal::FlatVectorBase<Type, Range, CustomHeaderType>, Type, Range, Compare>;
 
     /** @brief 8 bytes vector using signed char with a reduced range
      * The vector guarantee that it will be sorted at any given time */
-    template<typename Type, typename Compare = std::less<Type>>
-    using SortedTinyFlatVector = SortedFlatVector<Type, std::uint32_t, Compare>;
+    template<typename Type, typename Compare = std::less<Type>, typename CustomHeaderType = void>
+    using SortedTinyFlatVector = SortedFlatVector<Type, std::uint32_t, Compare, CustomHeaderType>;
 }

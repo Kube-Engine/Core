@@ -16,10 +16,10 @@ namespace kF::Core
      * @tparam Type Internal type in container
      * @tparam Range Range of container
      */
-    template<typename Type, std::integral Range = std::size_t>
-    using FlatVector = Internal::VectorDetails<Internal::FlatVectorBase<Type, Range>, Type, Range>;
+    template<typename Type, std::integral Range = std::size_t, typename CustomHeaderType = void>
+    using FlatVector = Internal::VectorDetails<Internal::FlatVectorBase<Type, Range, CustomHeaderType>, Type, Range>;
 
     /** @brief 8 bytes vector using signed char with a reduced range */
-    template<typename Type>
-    using TinyFlatVector = Internal::VectorDetails<Internal::FlatVectorBase<Type, std::uint32_t>, Type, std::uint32_t>;
+    template<typename Type, typename CustomHeaderType = void>
+    using TinyFlatVector = Internal::VectorDetails<Internal::FlatVectorBase<Type, std::uint32_t, CustomHeaderType>, Type, std::uint32_t>;
 }

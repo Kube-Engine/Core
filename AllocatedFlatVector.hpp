@@ -19,11 +19,11 @@ namespace kF::Core
      * @tparam DeallocateFunc Deallocator
      * @tparam Range Range of container
      */
-    template<typename Type, auto AllocateFunc, auto DeallocateFunc, std::integral Range = std::size_t>
-    using AllocatedFlatVector = Internal::VectorDetails<Internal::AllocatedFlatVectorBase<Type, Range, AllocateFunc, DeallocateFunc>, Type, Range>;
+    template<typename Type, auto AllocateFunc, auto DeallocateFunc, std::integral Range = std::size_t, typename CustomHeaderType = void>
+    using AllocatedFlatVector = Internal::VectorDetails<Internal::AllocatedFlatVectorBase<Type, Range, AllocateFunc, DeallocateFunc, CustomHeaderType>, Type, Range>;
 
     /** @brief 8 bytes vector using signed char with a reduced range
      * The vector must take an allocator and a deallocator functor */
-    template<typename Type, auto AllocateFunc, auto DeallocateFunc>
-    using AllocatedTinyFlatVector = AllocatedFlatVector<Type, AllocateFunc, DeallocateFunc, std::uint32_t>;
+    template<typename Type, auto AllocateFunc, auto DeallocateFunc, typename CustomHeaderType = void>
+    using AllocatedTinyFlatVector = AllocatedFlatVector<Type, AllocateFunc, DeallocateFunc, std::uint32_t, CustomHeaderType>;
 }

@@ -7,6 +7,8 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <memory>
+#include <algorithm>
 
 #include "Utils.hpp"
 
