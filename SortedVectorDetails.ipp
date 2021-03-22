@@ -79,3 +79,34 @@ inline void kF::Core::Internal::SortedVectorDetails<Base, Type, Range, Compare, 
 {
     std::sort(DetailsBase::beginUnsafe(), DetailsBase::endUnsafe(), Compare{});
 }
+
+template<typename Base, typename Type, std::integral Range, typename Compare, bool IsSmallOptimized>
+template<typename AssignType>
+Range kF::Core::Internal::SortedVectorDetails<Base, Type, Range, Compare, IsSmallOptimized>::assign(const Range index, AssignType &&value)
+{
+    const auto count = DetailsBase::sizeUnsafe();
+    auto &elem = DetailsBase::at(index);
+    Range finalPos = index;
+
+    elem = std::forward<AssignType>(value);
+    if (index > 0 && !Compare{}(DetailsBase::at(index - 1), elem)) {
+        finalPos = index - 1;
+        for (auto i = index - 2; i > 0; --i) {
+            if (!Compare{}(DetailsBase::at(i), elem))
+                finalPos = i;
+            else
+                break;
+        }
+        std::swap(DetailsBase::at(finalPos), elem);
+    } else if (index + 1 < count && !Compare{}(elem, DetailsBase::at(index + 1))) {
+        finalPos = index + 1;
+        for (auto i = index + 2; i < count; ++i) {
+            if (!Compare{}(elem, DetailsBase::at(i))) {
+                finalPos = i;
+            } else
+                break;
+        }
+        std::swap(DetailsBase::at(finalPos), elem);
+    }
+    return finalPos;
+}

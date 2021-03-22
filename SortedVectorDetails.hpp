@@ -125,15 +125,14 @@ public:
     template<std::input_iterator InputIterator, typename Map>
     void resize(InputIterator from, InputIterator to, Map &&map);
 
-private:
-    /** @brief Reimplemented functions */
-    using DetailsBase::push;
-    using DetailsBase::insert;
-    using DetailsBase::resize;
-
-protected:
     /** @brief Sort the vector */
     void sort(void);
+
+    /** @brief Assign a new value to an existing element
+     *  @return The index where the element has been moved if assignment break sort */
+    template<typename AssignType>
+    Range assign(const Range index, AssignType &&value);
+
 
     /** @brief Finds where to insert an element */
     [[nodiscard]] Iterator findSortedPlacement(const Type &value)
@@ -142,6 +141,12 @@ protected:
     [[nodiscard]] ConstIterator findSortedPlacement(const Type &value) const
         noexcept_invocable(Compare, const Type &, const Type &)
         { return DetailsBase::find([&value](const Type &other) { return Compare{}(value, other); }); }
+
+private:
+    /** @brief Reimplemented functions */
+    using DetailsBase::push;
+    using DetailsBase::insert;
+    using DetailsBase::resize;
 };
 
 #include "SortedVectorDetails.ipp"

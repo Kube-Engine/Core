@@ -435,6 +435,22 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
 }
 
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
+inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::move(Range from, Range to, Range output) noexcept_ndebug
+{
+    kFAssert(output < from || output > to,
+        throw std::logic_error("VectorDetails::move: Invalid move range"));
+    ++to;
+    if (output < from) {
+        const auto tmp = from;
+        from = output;
+        output = to;
+        to = tmp;
+    } else if (output)
+        ++output;
+    const auto it = beginUnsafe();
+    std::rotate(it + from, it + to, it + output);
+}
+template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 inline bool kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::operator==(const VectorDetails &other) const noexcept
     requires std::equality_comparable<Type>
 {

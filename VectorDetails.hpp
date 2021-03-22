@@ -216,6 +216,10 @@ public:
     bool reserve(const Range capacity) noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type));
 
 
+    /** @brief Move range [from, to] at [output, to - from] */
+    void move(Range from, Range to, Range output) noexcept_ndebug;
+
+
     /** @brief Comparison operators */
     [[nodiscard]] bool operator==(const VectorDetails &other) const noexcept
         requires std::equality_comparable<Type>;
