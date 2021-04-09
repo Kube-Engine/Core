@@ -42,7 +42,9 @@ set(KubeCoreSources
     ${KubeCoreDir}/SPSCQueue.ipp
     ${KubeCoreDir}/String.hpp
     ${KubeCoreDir}/StringDetails.hpp
+    ${KubeCoreDir}/StringDetails.ipp
     ${KubeCoreDir}/StringLiteral.hpp
+    ${KubeCoreDir}/StringUtils.hpp
     ${KubeCoreDir}/TrivialDispatcher.hpp
     ${KubeCoreDir}/TrivialFunctor.hpp
     ${KubeCoreDir}/Utils.hpp

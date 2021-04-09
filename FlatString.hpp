@@ -18,7 +18,7 @@ namespace kF::Core
      * @tparam Range Range of container
      */
     template<typename Type, std::integral Range = std::size_t>
-    using FlatStringBase = Internal::StringDetails<FlatVector<Type, Range, void>, Type, Range>;
+    using FlatStringBase = Internal::StringDetails<FlatVector<Type, Range, Internal::NoCustomHeaderType>, Type, Range>;
 
     /** @brief 8 bytes string using signed char and size_t range
      *  The string is non-null terminated */

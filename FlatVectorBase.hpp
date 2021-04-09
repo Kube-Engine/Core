@@ -12,6 +12,8 @@ namespace kF::Core::Internal
     template<typename Type, std::integral Range, typename CustomHeaderType>
     class FlatVectorBase;
 
+    struct NoCustomHeaderType {};
+
     /** @brief Deduce the alignment of FlatVectorHeader */
     template<typename Type, typename Range, std::size_t CustomHeaderTypeSize>
     [[nodiscard]] constexpr std::size_t GetFlatVectorHeaderAlignment(void)
@@ -36,7 +38,7 @@ namespace kF::Core::Internal
 
     /** @brief Header of the FlatVector without custom type */
     template<typename Type, typename Range>
-    struct alignas(GetFlatVectorHeaderAlignment<Type, Range, 0>()) FlatVectorHeader<Type, Range, void>
+    struct alignas(GetFlatVectorHeaderAlignment<Type, Range, 0>()) FlatVectorHeader<Type, Range, Internal::NoCustomHeaderType>
     {
         Range size {};
         Range capacity {};
@@ -104,12 +106,11 @@ public:
 
     /** @brief Get the custom type in header if any (doesn't check if the vector is allocated) */
     template<typename As = CustomHeaderType>
-    [[nodiscard]] std::enable_if_t<!std::is_same_v<As, void>, int> headerCustomType(void) noexcept
-        { return /*_ptr->customType*/ 42; }
-
+    [[nodiscard]] std::enable_if_t<!std::is_same_v<As, NoCustomHeaderType>, As &> headerCustomType(void) noexcept
+        { return _ptr->customType; }
     template<typename As = CustomHeaderType>
-    [[nodiscard]] std::enable_if_t<!std::is_same_v<As, void>, int> headerCustomType(void) const noexcept
-        { return /*_ptr->customType*/ 42; }
+    [[nodiscard]] std::enable_if_t<!std::is_same_v<As, NoCustomHeaderType>, const As &> headerCustomType(void) const noexcept
+        { return _ptr->customType; }
 
 protected:
     /** @brief Protected data setter */
@@ -126,7 +127,7 @@ protected:
     [[nodiscard]] Type *allocate(const Range capacity) noexcept
     {
         auto ptr = Utils::AlignedAlloc<alignof(Header), Header>(sizeof(Header) + sizeof(Type) * capacity);
-        if constexpr (!std::is_same_v<CustomHeaderType, void>)
+        if constexpr (!std::is_same_v<CustomHeaderType, NoCustomHeaderType>)
             new (&ptr->customType) CustomHeaderType {};
         return reinterpret_cast<Type *>(ptr + 1);
     }
@@ -135,7 +136,7 @@ protected:
     void deallocate(Type * const data, const Range) noexcept
     {
         auto ptr = reinterpret_cast<Header *>(data) - 1;
-        if constexpr (!std::is_same_v<CustomHeaderType, void>)
+        if constexpr (!std::is_same_v<CustomHeaderType, NoCustomHeaderType>)
             ptr->customType.~CustomHeaderType();
         Utils::AlignedFree(ptr);
     }
