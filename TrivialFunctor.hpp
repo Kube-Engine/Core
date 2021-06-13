@@ -31,7 +31,7 @@ namespace kF::Core
 
 /** @brief Very fast opaque functor but only takes trivial types less or equal sized than cacheline eighth */
 template<typename Return, typename ...Args, std::size_t CacheSize>
-class alignas_eighth_cacheline kF::Core::TrivialFunctor<Return(Args...), CacheSize>
+class kF::Core::TrivialFunctor<Return(Args...), CacheSize>
 {
 public:
     /** @brief Byte cache */
