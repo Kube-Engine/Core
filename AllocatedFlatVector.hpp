@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: FlatVector
+ * @ Description: AllocatedFlatVector
  */
 
 #pragma once

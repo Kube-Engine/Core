@@ -34,7 +34,7 @@ inline void kF::Core::Utils::AlignedFree(void *data) noexcept
 }
 
 template<std::integral Unit>
-inline constexpr Unit kF::Core::Utils::NextPowerOf2(Unit value)
+inline constexpr Unit kF::Core::Utils::NextPowerOf2(Unit value) noexcept
 {
     if (value && !(value & (value - 1)))
         return value;

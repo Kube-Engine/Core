@@ -4,7 +4,7 @@
  */
 
 template<typename Type>
-kF::Core::SPSCQueue<Type>::SPSCQueue(const std::size_t capacity, const bool usedAsBuffer) noexcept
+inline kF::Core::SPSCQueue<Type>::SPSCQueue(const std::size_t capacity, const bool usedAsBuffer) noexcept
 {
     _tailCache.buffer.capacity = capacity + usedAsBuffer;
     _tailCache.buffer.data = reinterpret_cast<Type *>(Utils::AlignedAlloc<alignof(Type)>(sizeof(Type) * _tailCache.buffer.capacity));
@@ -12,7 +12,7 @@ kF::Core::SPSCQueue<Type>::SPSCQueue(const std::size_t capacity, const bool used
 }
 
 template<typename Type>
-kF::Core::SPSCQueue<Type>::~SPSCQueue(void) noexcept_destructible(Type)
+inline kF::Core::SPSCQueue<Type>::~SPSCQueue(void) noexcept_destructible(Type)
 {
     clear();
     Utils::AlignedFree(_tailCache.buffer.data);

@@ -3,8 +3,9 @@
  * @ Description: String details
  */
 
-template<typename Base, typename Type, typename Range>
-kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringDetails<Base, Type, Range>::operator+(const StringDetails &other) noexcept
+template<typename Base, typename Type, std::integral Range>
+    requires std::is_trivial_v<Type>
+inline kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringDetails<Base, Type, Range>::operator+(const StringDetails &other) noexcept
 {
     StringDetails res;
     res.reserve(size() + other.size());
@@ -13,8 +14,9 @@ kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringD
     return res;
 }
 
-template<typename Base, typename Type, typename Range>
-kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringDetails<Base, Type, Range>::operator+(const char * const cstring) noexcept
+template<typename Base, typename Type, std::integral Range>
+    requires std::is_trivial_v<Type>
+inline kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringDetails<Base, Type, Range>::operator+(const char * const cstring) noexcept
 {
     StringDetails res;
     const auto length = SafeStrlen(cstring);
@@ -24,8 +26,9 @@ kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringD
     return res;
 }
 
-template<typename Base, typename Type, typename Range>
-kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringDetails<Base, Type, Range>::operator+(const std::basic_string<Type> &other) noexcept
+template<typename Base, typename Type, std::integral Range>
+    requires std::is_trivial_v<Type>
+inline kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringDetails<Base, Type, Range>::operator+(const std::basic_string<Type> &other) noexcept
 {
     StringDetails res;
     res.reserve(size() + other.size());
@@ -34,7 +37,8 @@ kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringD
     return res;
 }
 
-template<typename Base, typename Type, typename Range>
+template<typename Base, typename Type, std::integral Range>
+    requires std::is_trivial_v<Type>
 inline kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::StringDetails<Base, Type, Range>::operator+(const std::basic_string_view<Type> &other) noexcept
 {
     StringDetails res;
@@ -44,7 +48,8 @@ inline kF::Core::Internal::StringDetails<Base, Type, Range> kF::Core::Internal::
     return res;
 }
 
-template<typename Base, typename Type, typename Range>
+template<typename Base, typename Type, std::integral Range>
+    requires std::is_trivial_v<Type>
 inline const char *kF::Core::Internal::StringDetails<Base, Type, Range>::c_str(void) const noexcept
 {
     if (!size())
@@ -55,7 +60,8 @@ inline const char *kF::Core::Internal::StringDetails<Base, Type, Range>::c_str(v
     return dataUnsafe();
 }
 
-template<typename Base, typename Type, typename Range>
+template<typename Base, typename Type, std::integral Range>
+    requires std::is_trivial_v<Type>
 inline std::size_t kF::Core::Internal::StringDetails<Base, Type, Range>::SafeStrlen(const char * const cstring) noexcept
 {
     if (!cstring)

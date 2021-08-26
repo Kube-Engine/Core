@@ -21,5 +21,5 @@ namespace kF
         std::uint8_t patch = 0;
     };
 
-    inline constexpr Version KubeVersion(0, 1, 0);
+    inline constexpr Version KubeVersion(0, 2, 0);
 }

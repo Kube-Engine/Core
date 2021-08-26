@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: String details
+ * @ Description: StringDetails
  */
 
 #pragma once

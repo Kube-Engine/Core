@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: Small String
+ * @ Description: SmallString
  */
 
 #pragma once
@@ -24,7 +24,7 @@ namespace kF::Core
     /** @brief Small optimized string with a reduced range
      *  The string is non-null terminated */
     template<typename Type, std::size_t OptimizedCapacity>
-    using TinySmallStringBase = SmallVector<Type, OptimizedCapacity, std::uint32_t>;
+    using TinySmallStringBase = SmallStringBase<Type, OptimizedCapacity, std::uint32_t>;
 
     /** @brief 32 bytes small optimized string (cache of 8 bytes)
      *  The string is non-null terminated */

@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: Small Vector
+ * @ Description: AllocatedSmallVector
  */
 
 #pragma once

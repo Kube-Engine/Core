@@ -82,7 +82,7 @@ inline void kF::Core::Internal::SortedVectorDetails<Base, Type, Range, Compare, 
 
 template<typename Base, typename Type, std::integral Range, typename Compare, bool IsSmallOptimized>
 template<typename AssignType>
-Range kF::Core::Internal::SortedVectorDetails<Base, Type, Range, Compare, IsSmallOptimized>::assign(const Range index, AssignType &&value)
+inline Range kF::Core::Internal::SortedVectorDetails<Base, Type, Range, Compare, IsSmallOptimized>::assign(const Range index, AssignType &&value)
 {
     const auto count = DetailsBase::sizeUnsafe();
     auto &elem = DetailsBase::at(index);

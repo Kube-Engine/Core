@@ -191,7 +191,7 @@ namespace kF::Core
 
         /** @brief Find the closest power of 2 of value */
         template<std::integral Unit>
-        [[nodiscard]] constexpr Unit NextPowerOf2(Unit value);
+        [[nodiscard]] constexpr Unit NextPowerOf2(Unit value) noexcept;
     }
 }
 

@@ -8,13 +8,13 @@ template<typename ...Args> requires std::constructible_from<Type, Args...>
 inline Type &kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::push(Args &&...args)
     noexcept(nothrow_constructible(Type, Args...) && nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
-    if (!data()) [[unlikely]]
-        reserveUnsafe<false>(2);
-    else if (sizeUnsafe() == capacityUnsafe()) [[unlikely]]
+    if (!data())
+        reserveUnsafe<false>(static_cast<Range>(2));
+    else if (sizeUnsafe() == capacityUnsafe())
         grow();
-    const auto currentSize = sizeUnsafe();
+    const Range currentSize = sizeUnsafe();
     Type * const elem = dataUnsafe() + currentSize;
-    setSize(currentSize + 1);
+    setSize(static_cast<Range>(currentSize + static_cast<Range>(1)));
     new (elem) Type(std::forward<Args>(args)...);
     return *elem;
 }
@@ -417,9 +417,9 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
     noexcept(nothrow_forward_constructible(Type) && nothrow_destructible(Type))
 {
     const auto currentData = dataUnsafe();
-    const auto currentSize = sizeUnsafe();
-    const auto currentCapacity = capacityUnsafe();
-    const auto desiredCapacity = currentCapacity + std::max(currentCapacity, minimum);
+    const Range currentSize = sizeUnsafe();
+    const Range currentCapacity = capacityUnsafe();
+    const Range desiredCapacity = static_cast<Range>(currentCapacity + static_cast<Range>(std::max(currentCapacity, minimum)));
     const auto tmpData = allocate(desiredCapacity);
 
     setData(tmpData);
@@ -450,6 +450,7 @@ inline void kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimize
     const auto it = beginUnsafe();
     std::rotate(it + from, it + to, it + output);
 }
+
 template<typename Base, typename Type, std::integral Range, bool IsSmallOptimized>
 inline bool kF::Core::Internal::VectorDetails<Base, Type, Range, IsSmallOptimized>::operator==(const VectorDetails &other) const noexcept
     requires std::equality_comparable<Type>

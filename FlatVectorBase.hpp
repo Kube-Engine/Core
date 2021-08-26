@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: FlatVector
+ * @ Description: FlatVectorBase
  */
 
 #pragma once
@@ -28,8 +28,8 @@ namespace kF::Core::Internal
     }
 
     /** @brief Header of the FlatVector with custom type */
-    template<typename Type, typename Range, typename CustomHeaderType>
-    struct alignas(GetFlatVectorHeaderAlignment<Type, Range, sizeof(CustomHeaderType)>()) FlatVectorHeader
+    template<typename Type, typename Range, typename CustomHeaderType, std::size_t CustomHeaderTypeSize = sizeof(CustomHeaderType)>
+    struct alignas(GetFlatVectorHeaderAlignment<Type, Range, CustomHeaderTypeSize>()) FlatVectorHeader
     {
         CustomHeaderType customType {};
         Range size {};
@@ -38,7 +38,7 @@ namespace kF::Core::Internal
 
     /** @brief Header of the FlatVector without custom type */
     template<typename Type, typename Range>
-    struct alignas(GetFlatVectorHeaderAlignment<Type, Range, 0>()) FlatVectorHeader<Type, Range, Internal::NoCustomHeaderType>
+    struct alignas(GetFlatVectorHeaderAlignment<Type, Range, 0>()) FlatVectorHeader<Type, Range, NoCustomHeaderType>
     {
         Range size {};
         Range capacity {};
@@ -124,22 +124,10 @@ protected:
 
 
     /** @brief Allocates a new buffer */
-    [[nodiscard]] Type *allocate(const Range capacity) noexcept
-    {
-        auto ptr = Utils::AlignedAlloc<alignof(Header), Header>(sizeof(Header) + sizeof(Type) * capacity);
-        if constexpr (!std::is_same_v<CustomHeaderType, NoCustomHeaderType>)
-            new (&ptr->customType) CustomHeaderType {};
-        return reinterpret_cast<Type *>(ptr + 1);
-    }
+    [[nodiscard]] Type *allocate(const Range capacity) noexcept;
 
     /** @brief Deallocates a buffer */
-    void deallocate(Type * const data, const Range) noexcept
-    {
-        auto ptr = reinterpret_cast<Header *>(data) - 1;
-        if constexpr (!std::is_same_v<CustomHeaderType, NoCustomHeaderType>)
-            ptr->customType.~CustomHeaderType();
-        Utils::AlignedFree(ptr);
-    }
+    void deallocate(Type * const data, const Range) noexcept;
 
 private:
     Header *_ptr { nullptr };

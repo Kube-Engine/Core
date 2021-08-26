@@ -174,7 +174,7 @@ TEST(Vector, NullArgs) \
 
 using namespace kF::Core;
 
-static std::pmr::unsynchronized_pool_resource Pool;
+static std::pmr::synchronized_pool_resource Pool;
 
 static void *DefaultAlloc(const std::size_t bytes, const std::size_t alignment)
 {

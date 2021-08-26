@@ -5,7 +5,7 @@
 
 template<typename Type>
 template<typename ...Args> requires std::constructible_from<Type, Args...>
-void kF::Core::HeapArray<Type>::allocate(const std::size_t size, Args &&...args)
+inline void kF::Core::HeapArray<Type>::allocate(const std::size_t size, Args &&...args)
     noexcept(nothrow_ndebug && nothrow_constructible(Type, Args...) && nothrow_destructible(Type))
 {
     if constexpr (!std::is_trivially_destructible_v<Type>) {

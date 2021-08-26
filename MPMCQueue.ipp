@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 template<typename Type>
-kF::Core::MPMCQueue<Type>::MPMCQueue(const std::size_t capacity)
+inline kF::Core::MPMCQueue<Type>::MPMCQueue(const std::size_t capacity)
     : _tailCache(Cache { Buffer { capacity - 1, nullptr } })
 {
     if (!((capacity >= 2) && ((capacity & (capacity - 1)) == 0)))
@@ -21,7 +21,7 @@ kF::Core::MPMCQueue<Type>::MPMCQueue(const std::size_t capacity)
 }
 
 template<typename Type>
-kF::Core::MPMCQueue<Type>::~MPMCQueue(void) noexcept_destructible(Type)
+inline kF::Core::MPMCQueue<Type>::~MPMCQueue(void) noexcept_destructible(Type)
 {
     clear();
     Utils::AlignedFree(_tailCache.buffer.data);

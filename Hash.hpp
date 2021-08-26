@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: Kube hash function
+ * @ Description: Compile time hash function
  */
 
 #pragma once

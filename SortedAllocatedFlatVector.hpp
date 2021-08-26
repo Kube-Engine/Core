@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: Sorted FlatVector
+ * @ Description: SortedAllocatedFlatVector
  */
 
 #pragma once

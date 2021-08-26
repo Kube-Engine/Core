@@ -34,6 +34,10 @@ public:
     DispatcherDetails &operator=(DispatcherDetails &&dispatcher) noexcept = default;
 
 
+    /** @brief Internal functor count */
+    [[nodiscard]] auto count(void) const noexcept { return _functors.size(); }
+
+
     /** @brief Add a functor to dispatch list */
     template<typename Functor>
     void add(Functor &&functor) noexcept { _functors.push().prepare(std::forward<Functor>(functor)); }
@@ -51,12 +55,15 @@ public:
     void add(void) noexcept { _functors.push().template prepare<FreeFunction>(); }
 
 
+    /** @brief Clear dispatch list */
+    void clear(void) noexcept_destructible(InternalFunctor) { _functors.clear(); }
+
+
     /** @brief Dispatch every internal functors */
     void dispatch(Args ...args)
     {
-        for (auto &functor : _functors) {
+        for (auto &functor : _functors)
             functor(std::forward<Args>(args)...);
-        }
     }
 
     /** @brief Dispatch every internal functors with a given callback to receive the return value of each functor */
@@ -64,18 +71,9 @@ public:
         requires (!std::is_same_v<Return, void> && std::invocable<Callback, Return>)
     void dispatch(Callback &&callback, Args ...args)
     {
-        for (auto &functor : _functors) {
+        for (auto &functor : _functors)
             callback(functor(std::forward<Args>(args)...));
-        }
     }
-
-
-    /** @brief Internal functor count */
-    [[nodiscard]] auto count(void) const noexcept { return _functors.size(); }
-
-
-    /** @brief Clear dispatch list */
-    void clear(void) noexcept_destructible(InternalFunctor) { _functors.clear(); }
 
 private:
     TinyVector<InternalFunctor> _functors {};

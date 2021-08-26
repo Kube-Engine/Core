@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: Trivial dispatcher
+ * @ Description: TrivialDispatcher
  */
 
 #pragma once
@@ -10,7 +10,7 @@
 
 namespace kF::Core
 {
-    /** @brief Specialization of dispatcher with trivial functors */
+    /** @brief Specialization of dispatcher with 'TrivialFunctor' */
     template<typename Signature, std::size_t CacheSize = CacheLineEighthSize>
     using TrivialDispatcher = DispatcherDetails<Signature, CacheSize, TrivialFunctor>;
 }

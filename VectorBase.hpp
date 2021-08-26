@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: Base data of a vector
+ * @ Description: VectorBase
  */
 
 #pragma once

@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: Small Vector
+ * @ Description: AllocatedSmallVectorBase
  */
 
 #pragma once
@@ -31,6 +31,6 @@ protected:
     void deallocate(Type * const data, const Range capacity) noexcept
     {
         if (data != SmallVectorBase<Type, OptimizedCapacity, Range>::optimizedData()) [[unlikely]]
-            DeallocateFunc(data, capacity, alignof(Type));
+            DeallocateFunc(data, sizeof(Type) * capacity, alignof(Type));
     }
 };

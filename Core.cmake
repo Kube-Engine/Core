@@ -44,6 +44,7 @@ set(KubeCoreSources
     ${KubeCoreDir}/StringDetails.hpp
     ${KubeCoreDir}/StringDetails.ipp
     ${KubeCoreDir}/StringLiteral.hpp
+    ${KubeCoreDir}/StringLiteral.ipp
     ${KubeCoreDir}/StringUtils.hpp
     ${KubeCoreDir}/TrivialDispatcher.hpp
     ${KubeCoreDir}/TrivialFunctor.hpp
@@ -57,7 +58,7 @@ set(KubeCoreSources
     ${KubeCoreDir}/Version.hpp
 )
 
-add_library(${PROJECT_NAME} INTERFACE) #${KubeCoreSources})
+add_library(${PROJECT_NAME} INTERFACE ${KubeCoreSources})
 
 # target_link_libraries(${PROJECT_NAME}
 # PUBLIC

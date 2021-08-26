@@ -1,6 +1,6 @@
 /**
  * @ Author: Matthieu Moinvaziri
- * @ Description: Vector
+ * @ Description: AllocatedString
  */
 
 #pragma once
