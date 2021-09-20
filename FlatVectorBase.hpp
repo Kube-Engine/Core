@@ -124,7 +124,21 @@ protected:
 
 
     /** @brief Allocates a new buffer */
+<<<<<<< HEAD
     [[nodiscard]] Type *allocate(const Range capacity) noexcept;
+=======
+    [[nodiscard]] Type *allocate(const Range capacity) noexcept
+    {
+        auto ptr = Utils::AlignedAlloc<alignof(Header), Header>(sizeof(Header) + sizeof(Type) * capacity);
+        if constexpr (!std::is_same_v<CustomHeaderType, NoCustomHeaderType>) {
+            if (_ptr)
+                new (&ptr->customType) CustomHeaderType(std::move(_ptr->customType));
+            else
+                new (&ptr->customType) CustomHeaderType {};
+        }
+        return reinterpret_cast<Type *>(ptr + 1);
+    }
+>>>>>>> 0444dc71a5086948805173d8f483286b341f645b
 
     /** @brief Deallocates a buffer */
     void deallocate(Type * const data, const Range) noexcept;
