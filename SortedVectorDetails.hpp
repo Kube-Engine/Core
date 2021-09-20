@@ -105,6 +105,15 @@ public:
     void insert(InputIterator from, InputIterator to, Map &&map);
 
 
+    /** @brief Insert an value by copy at a specific location (no sort involved), returning its iterator */
+    Iterator insertAt(const Iterator at, const Type &value)
+        { return DetailsBase::insert(at, value); }
+
+    /** @brief Insert an value by move at a specific location (no sort involved), returning its iterator */
+    Iterator insertAt(const Iterator at, Type &&value)
+        { return DetailsBase::insert(at, std::move(value)); }
+
+
     /** @brief Resize the vector using default constructor to initialize each element */
     void resize(const Range count)
         noexcept(nothrow_destructible(Type) && nothrow_default_constructible(Type))
